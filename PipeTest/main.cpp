@@ -1,26 +1,26 @@
 #include <cmath>
 #include <list>
 #include <assert.h>
+#include <cstdio>
 #include <Windows.h>
+
 #include "SDL.h"
+#include "Box2D/Box2D.h"
+
+#include "main.h"
 #include "Timer.h"
 #include "Drop.h"
+#include "Wall.h"
 
-const Uint32 SCREEN_WIDTH = 1024;
-const Uint32 SCREEN_HEIGHT = 768;
-const Uint32 SCREEN_BPP = 32;
-const Uint32 FRAME_RATE = 30;
-
-CDrop createDrop(SDL_Surface *screen);
-void drawScreen(SDL_Surface *screen, std::list<CDrop> &drops);
+void drawScreen(SDL_Surface *screen, std::list<CDrop> &drops, CWall *wall);
 void setPixel(SDL_Surface *screen, Uint32 x, Uint32 y, Uint8 r, Uint8 g, Uint8 b);
 
+SDL_Surface *screen = NULL;
+b2World *world = NULL;
 
 int main(int argc, char* args[])
 {
 	bool running = true;
-	SDL_Surface *screen = NULL;
-	SDL_Surface *image = NULL;
 	SDL_Event event;
 	int frame = 0;
 	CTimer fps;
@@ -40,13 +40,24 @@ int main(int argc, char* args[])
 		return 1;
 	}
 
-	SDL_Flip(screen);
+	// Initialize box2d world
+	b2Vec2 gravity;
+	gravity.Set(0.0f, 10.0f);
+	world = new b2World(gravity);
+
+	CWall *wall = new CWall(0, 757, 1024, 9);
 
 	// Main loop
 	while (running) {
 		fps.start();
 
-		drawScreen(screen, drops);
+		char title[256];
+		sprintf_s(title, "Pipe Test - Drop count = %d", drops.size());
+		SDL_WM_SetCaption(title, NULL);
+
+		world->Step(TIME_STEP, VELOCITY_ITER, POSITION_ITER);
+
+		drawScreen(screen, drops, wall);
 
 		while (SDL_PollEvent(&event)) {
 			if (event.type == SDL_QUIT) {
@@ -70,25 +81,16 @@ int main(int argc, char* args[])
 	}
 
 	// Cleanup
+	drops.clear();
+	delete wall;
+	delete world;
+	world = NULL;
 	SDL_Quit();
 
 	return 0;
 }
 
-CDrop createDrop(SDL_Surface *screen)
-{
-	Uint32 radius = 5 + (rand() % 10);
-	Uint32 r = rand() % 128;
-	Uint32 g = 128 + (rand() % 128);
-	Uint32 b = rand() % 128;
-	Uint32 color = SDL_MapRGB(screen->format, r, g, b);
-	Uint32 x = SCREEN_WIDTH - 50 + (rand() % 20);
-	Uint32 y = 100 + (rand() % 20);
-
-	return CDrop(radius, x, y, color);
-}
-
-void drawScreen(SDL_Surface *screen, std::list<CDrop> &drops)
+void drawScreen(SDL_Surface *screen, std::list<CDrop> &drops, CWall *wall)
 {
 	const int margin = 30;
 
@@ -100,13 +102,15 @@ void drawScreen(SDL_Surface *screen, std::list<CDrop> &drops)
 	// Clear screen each frame
 	SDL_FillRect(screen, NULL, 0);
 
+	wall->draw(screen);
+
 	// Add a new drop to the end each frame
-	drops.push_back(createDrop(screen));
+	drops.push_back(CDrop());
 
 	std::list<CDrop>::iterator drop = drops.begin();
 	while (drop != drops.end()) {
 		// Move drop
-		drop->move(drop->getX() - 2, drop->getY() + 2);
+		drop->update();
 
 		if (drop->getX() + drop->getRadius() < SCREEN_WIDTH &&
 			drop->getY() + drop->getRadius() < SCREEN_HEIGHT) {
@@ -124,4 +128,14 @@ void drawScreen(SDL_Surface *screen, std::list<CDrop> &drops)
 		SDL_UnlockSurface(screen);
 
 	SDL_Flip(screen);
+}
+
+void debugPrint(char *format, ...)
+{
+	char str[1024];
+	va_list args;
+	va_start(args, format);
+	vsprintf_s(str, format, args);
+	OutputDebugString(str);
+	va_end(args);
 }
