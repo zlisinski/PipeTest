@@ -73,13 +73,15 @@ b2Body *CDrop::createBody() const
 	
 	newBody = world->CreateBody(&bodyDef);
 
-	b2PolygonShape box;
-	box.SetAsBox(pixelToMeter((float)this->radius), pixelToMeter((float)this->radius)); // TODO: make this a circle
+	b2CircleShape shape;
+	shape.m_radius = pixelToMeter((float)this->radius);
 
 	b2FixtureDef fixtureDef;
-	fixtureDef.shape = &box;
+	fixtureDef.shape = &shape;
 	fixtureDef.density = 1.0f;
 	fixtureDef.friction = 0.3f;
+	fixtureDef.restitution = 0.25f;
+	fixtureDef.filter.groupIndex = -1;
 
 	newBody->CreateFixture(&fixtureDef);
 

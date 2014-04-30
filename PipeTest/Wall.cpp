@@ -5,16 +5,28 @@
 #include "Wall.h"
 
 
-CWall::CWall(Uint32 x, Uint32 y, Uint32 width, Uint32 height) : x(x), y(y), width(width), height(height)
+CWall::CWall(Uint32 x, Uint32 y, Uint32 width, Uint32 height, Uint32 color) : x(x), y(y), width(width), height(height), color(color)
 {
-	b2BodyDef bodyDef;
-	bodyDef.position.Set(pixelToMeter((float)x - (width / 2)), pixelToMeter((float)y - (height / 2)));
-	
-	body = world->CreateBody(&bodyDef);
+	this->body = this->createBody();
+}
 
-	b2PolygonShape box;
-	box.SetAsBox(pixelToMeter((float)width / 2), pixelToMeter((float)height / 2));
-	body->CreateFixture(&box, 0);
+CWall::CWall(const CWall &copy) : x(copy.x), y(copy.y), width(copy.width), height(copy.height), color(copy.color)
+{
+	this->body = copy.createBody();
+}
+
+CWall &CWall::operator=(const CWall &copy)
+{
+	if (this != &copy) {
+		this->x = copy.x;
+		this->y = copy.y;
+		this->width = copy.width;
+		this->height = copy.height;
+		this->color = copy.color;
+		this->body = copy.createBody();
+	}
+
+	return *this;
 }
 
 CWall::~CWall()
@@ -24,5 +36,21 @@ CWall::~CWall()
 
 void CWall::draw(SDL_Surface *surface)
 {
-	Draw_FillRect(surface, x, y, width, height, SDL_MapRGB(surface->format, 128, 128, 0));
+	Draw_FillRect(surface, x, y, width, height, color);
+}
+
+b2Body *CWall::createBody() const
+{
+	b2Body *newBody;
+
+	b2BodyDef bodyDef;
+	bodyDef.position.Set(pixelToMeter((float)this->x - (this->width / 2)), pixelToMeter((float)this->y - (this->height / 2)));
+
+	newBody = world->CreateBody(&bodyDef);
+
+	b2PolygonShape box;
+	box.SetAsBox(pixelToMeter((float)this->width / 2), pixelToMeter((float)this->height / 2));
+	newBody->CreateFixture(&box, 0);
+
+	return newBody;
 }

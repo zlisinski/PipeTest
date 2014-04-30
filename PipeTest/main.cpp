@@ -12,8 +12,7 @@
 #include "Drop.h"
 #include "Wall.h"
 
-void drawScreen(SDL_Surface *screen, std::list<CDrop> &drops, CWall *wall);
-void setPixel(SDL_Surface *screen, Uint32 x, Uint32 y, Uint8 r, Uint8 g, Uint8 b);
+void drawScreen(SDL_Surface *screen, std::list<CDrop> &drops, std::list<CWall> &walls);
 
 SDL_Surface *screen = NULL;
 b2World *world = NULL;
@@ -25,6 +24,7 @@ int main(int argc, char* args[])
 	int frame = 0;
 	CTimer fps;
 	std::list<CDrop> drops;
+	std::list<CWall> walls;
 
 	// Initialize SDL
 	if (SDL_Init(SDL_INIT_VIDEO) < 0)
@@ -45,7 +45,8 @@ int main(int argc, char* args[])
 	gravity.Set(0.0f, 10.0f);
 	world = new b2World(gravity);
 
-	CWall *wall = new CWall(0, 757, 1024, 9);
+	walls.push_back(CWall(0, 757, 1024, 9, SDL_MapRGB(screen->format, 150, 75, 0)));
+	walls.push_back(CWall(700, 100, 10, 300, SDL_MapRGB(screen->format, 0, 0, 128)));
 
 	// Main loop
 	while (running) {
@@ -57,7 +58,7 @@ int main(int argc, char* args[])
 
 		world->Step(TIME_STEP, VELOCITY_ITER, POSITION_ITER);
 
-		drawScreen(screen, drops, wall);
+		drawScreen(screen, drops, walls);
 
 		while (SDL_PollEvent(&event)) {
 			if (event.type == SDL_QUIT) {
@@ -82,7 +83,7 @@ int main(int argc, char* args[])
 
 	// Cleanup
 	drops.clear();
-	delete wall;
+	walls.clear();
 	delete world;
 	world = NULL;
 	SDL_Quit();
@@ -90,7 +91,7 @@ int main(int argc, char* args[])
 	return 0;
 }
 
-void drawScreen(SDL_Surface *screen, std::list<CDrop> &drops, CWall *wall)
+void drawScreen(SDL_Surface *screen, std::list<CDrop> &drops, std::list<CWall> &walls)
 {
 	const int margin = 30;
 
@@ -102,7 +103,10 @@ void drawScreen(SDL_Surface *screen, std::list<CDrop> &drops, CWall *wall)
 	// Clear screen each frame
 	SDL_FillRect(screen, NULL, 0);
 
-	wall->draw(screen);
+	// Draw walls
+	for (std::list<CWall>::iterator wall = walls.begin(); wall != walls.end(); ++wall) {
+		wall->draw(screen);
+	}
 
 	// Add a new drop to the end each frame
 	drops.push_back(CDrop());
