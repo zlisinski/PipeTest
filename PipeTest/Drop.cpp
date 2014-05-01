@@ -8,7 +8,7 @@ CDrop::CDrop()
 {
 	this->radius = 5 + (rand() % 10);
 	this->x = SCREEN_WIDTH - 50 + (rand() % 20);
-	this->y = 100 + (rand() % 20);
+	this->y = 668 + (rand() % 20);
 	Uint32 r = rand() % 128;
 	Uint32 g = 128 + (rand() % 128);
 	Uint32 b = rand() % 128;
@@ -16,7 +16,7 @@ CDrop::CDrop()
 	this->body = this->createBody();
 }
 
-CDrop::CDrop(Uint32 radius, Uint32 x, Uint32 y, Uint32 color) : radius(radius), x(x), y(y), color(color)
+CDrop::CDrop(int radius, int x, int y, Uint32 color) : radius(radius), x(x), y(y), color(color)
 {
 	this->body = this->createBody();
 }
@@ -52,7 +52,8 @@ void CDrop::move(Uint32 x, Uint32 y)
 
 void CDrop::draw(SDL_Surface *surface) const
 {
-	Draw_FillCircle(surface, this->x, this->y, this->radius, this->color);
+	int newY = flipYAxis(this->y);
+	Draw_FillCircle(surface, this->x, newY, this->radius, this->color);
 }
 
 void CDrop::update()

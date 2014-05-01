@@ -5,6 +5,7 @@
 #include <Windows.h>
 
 #include "SDL.h"
+#include "SDL_draw.h"
 #include "Box2D/Box2D.h"
 
 #include "main.h"
@@ -42,11 +43,12 @@ int main(int argc, char* args[])
 
 	// Initialize box2d world
 	b2Vec2 gravity;
-	gravity.Set(0.0f, 10.0f);
+	gravity.Set(0.0f, -10.0f);
 	world = new b2World(gravity);
 
-	walls.push_back(CWall(0, 757, 1024, 9, SDL_MapRGB(screen->format, 150, 75, 0)));
-	walls.push_back(CWall(700, 100, 10, 300, SDL_MapRGB(screen->format, 0, 0, 128)));
+	// Add walls
+	walls.push_back(CWall(0, 10, 1024, 10, SDL_MapRGB(screen->format, 150, 75, 0)));
+	walls.push_back(CWall(650, 400, 100, 300, SDL_MapRGB(screen->format, 0, 0, 128)));
 
 	// Main loop
 	while (running) {
@@ -99,9 +101,17 @@ void drawScreen(SDL_Surface *screen, std::list<CDrop> &drops, std::list<CWall> &
 		if (SDL_LockSurface(screen) < 0)
 			return;
 	}
-
+	
 	// Clear screen each frame
 	SDL_FillRect(screen, NULL, 0);
+
+	// Draw grid
+	for (int x = 0; x < SCREEN_WIDTH; x += 100) {
+		Draw_VLine(screen, x, 0, SCREEN_HEIGHT - 1, SDL_MapRGB(screen->format, 255, 255, 255));
+	}
+	for (int y = 0; y < SCREEN_HEIGHT; y += 100) {
+		Draw_HLine(screen, 0, y, SCREEN_WIDTH - 1, SDL_MapRGB(screen->format, 255, 255, 255));
+	}
 
 	// Draw walls
 	for (std::list<CWall>::iterator wall = walls.begin(); wall != walls.end(); ++wall) {
@@ -116,8 +126,10 @@ void drawScreen(SDL_Surface *screen, std::list<CDrop> &drops, std::list<CWall> &
 		// Move drop
 		drop->update();
 
-		if (drop->getX() + drop->getRadius() < SCREEN_WIDTH &&
-			drop->getY() + drop->getRadius() < SCREEN_HEIGHT) {
+		if (((drop->getX() - drop->getRadius()) > 0) &&
+		    ((drop->getX() + drop->getRadius()) < SCREEN_WIDTH) &&
+		    ((drop->getY() - drop->getRadius()) > 0) &&
+		    ((drop->getY() + drop->getRadius()) < SCREEN_HEIGHT)) {
 				// Draw drop if it is still on the screen
 				drop->draw(screen);
 				++drop;

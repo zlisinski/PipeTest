@@ -5,7 +5,7 @@
 #include "Wall.h"
 
 
-CWall::CWall(Uint32 x, Uint32 y, Uint32 width, Uint32 height, Uint32 color) : x(x), y(y), width(width), height(height), color(color)
+CWall::CWall(int x, int y, int width, int height, Uint32 color) : x(x), y(y), width(width), height(height), color(color)
 {
 	this->body = this->createBody();
 }
@@ -36,7 +36,8 @@ CWall::~CWall()
 
 void CWall::draw(SDL_Surface *surface)
 {
-	Draw_FillRect(surface, x, y, width, height, color);
+	int newY = flipYAxis(this->y);
+	Draw_FillRect(surface, x, newY, width, height, color);
 }
 
 b2Body *CWall::createBody() const
@@ -44,7 +45,7 @@ b2Body *CWall::createBody() const
 	b2Body *newBody;
 
 	b2BodyDef bodyDef;
-	bodyDef.position.Set(pixelToMeter((float)this->x - (this->width / 2)), pixelToMeter((float)this->y - (this->height / 2)));
+	bodyDef.position.Set(pixelToMeter((float)this->x + (this->width / 2)), pixelToMeter((float)this->y - (this->height / 2)));
 
 	newBody = world->CreateBody(&bodyDef);
 
