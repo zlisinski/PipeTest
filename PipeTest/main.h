@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cmath>
+
 struct SDL_Surface;
 class b2World;
 
@@ -21,9 +23,9 @@ inline float pixelToMeter(float pixel)
 	return pixel * 0.01f;
 }
 
-inline float meterToPixel(float meter)
+inline int meterToPixel(float meter)
 {
-	return meter * 100;
+	return (int)floor(meter * 100);
 }
 
 inline int flipYAxis(int y)

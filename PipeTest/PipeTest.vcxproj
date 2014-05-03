@@ -67,12 +67,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AbstractBody.cpp" />
     <ClCompile Include="Drop.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Timer.cpp" />
     <ClCompile Include="Wall.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AbstractBody.h" />
     <ClInclude Include="Drop.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="Timer.h" />

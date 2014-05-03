@@ -2,24 +2,26 @@
 #include "SDL.h"
 #include "Box2D/Box2D.h"
 
-class CWall
+#include "AbstractBody.h"
+
+class CWall : public CAbstractBody
 {
 public:
+	CWall();
 	CWall(int x, int y, int width, int height, Uint32 color);
 	CWall(const CWall &copy);
 	CWall &operator=(const CWall &copy);
 	virtual ~CWall();
 
-	void draw(SDL_Surface *surface);
+	virtual void draw(SDL_Surface *surface) const;
+
+	int getWidth() const {return width;}
+	int getHeight() const {return height;}
 
 private:
-	int x;
-	int y;
 	int width;
 	int height;
-	Uint32 color;
-	b2Body *body;
-
-	b2Body *createBody() const;
+	
+	virtual b2Body *createBody() const;
 };
 

@@ -1,4 +1,3 @@
-#include <cmath>
 #include <list>
 #include <assert.h>
 #include <cstdio>
@@ -106,10 +105,10 @@ void drawScreen(SDL_Surface *screen, std::list<CDrop> &drops, std::list<CWall> &
 	SDL_FillRect(screen, NULL, 0);
 
 	// Draw grid
-	for (int x = 0; x < SCREEN_WIDTH; x += 100) {
+	for (int x = 0; x < SCREEN_WIDTH; x += 50) {
 		Draw_VLine(screen, x, 0, SCREEN_HEIGHT - 1, SDL_MapRGB(screen->format, 255, 255, 255));
 	}
-	for (int y = 0; y < SCREEN_HEIGHT; y += 100) {
+	for (int y = 0; y < SCREEN_HEIGHT; y += 50) {
 		Draw_HLine(screen, 0, y, SCREEN_WIDTH - 1, SDL_MapRGB(screen->format, 255, 255, 255));
 	}
 

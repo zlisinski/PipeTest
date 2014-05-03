@@ -4,13 +4,26 @@
 #include "main.h"
 #include "Wall.h"
 
-
-CWall::CWall(int x, int y, int width, int height, Uint32 color) : x(x), y(y), width(width), height(height), color(color)
+CWall::CWall() :
+	CAbstractBody(),
+	width(100),
+	height(100)
 {
 	this->body = this->createBody();
 }
 
-CWall::CWall(const CWall &copy) : x(copy.x), y(copy.y), width(copy.width), height(copy.height), color(copy.color)
+CWall::CWall(int x, int y, int width, int height, Uint32 color) :
+	CAbstractBody(x, y, color),
+	width(width),
+	height(height)
+{
+	this->body = this->createBody();
+}
+
+CWall::CWall(const CWall &copy) :
+	CAbstractBody(copy),
+	width(copy.width),
+	height(copy.height)
 {
 	this->body = copy.createBody();
 }
@@ -31,10 +44,9 @@ CWall &CWall::operator=(const CWall &copy)
 
 CWall::~CWall()
 {
-	world->DestroyBody(body);
 }
 
-void CWall::draw(SDL_Surface *surface)
+void CWall::draw(SDL_Surface *surface) const
 {
 	int newY = flipYAxis(this->y);
 	Draw_FillRect(surface, x, newY, width, height, color);

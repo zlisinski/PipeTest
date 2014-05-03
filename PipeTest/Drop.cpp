@@ -4,7 +4,8 @@
 #include "main.h"
 #include "Drop.h"
 
-CDrop::CDrop()
+CDrop::CDrop() :
+	CAbstractBody()
 {
 	this->radius = 5 + (rand() % 10);
 	this->x = SCREEN_WIDTH - 50 + (rand() % 20);
@@ -13,15 +14,20 @@ CDrop::CDrop()
 	Uint32 g = 128 + (rand() % 128);
 	Uint32 b = rand() % 128;
 	this->color = SDL_MapRGB(screen->format, r, g, b);
+
 	this->body = this->createBody();
 }
 
-CDrop::CDrop(int radius, int x, int y, Uint32 color) : radius(radius), x(x), y(y), color(color)
+CDrop::CDrop(int x, int y, int radius, Uint32 color) :
+	CAbstractBody(x, y, color),
+	radius(radius)
 {
 	this->body = this->createBody();
 }
 
-CDrop::CDrop(const CDrop &copy) : radius(copy.radius), x(copy.x), y(copy.y), color(copy.color)
+CDrop::CDrop(const CDrop &copy) :
+	CAbstractBody(copy.x, copy.y, copy.color),
+	radius(copy.radius)
 {
 	this->body = copy.createBody();
 }
@@ -41,26 +47,12 @@ CDrop &CDrop::operator=(const CDrop &copy)
 
 CDrop::~CDrop()
 {
-	world->DestroyBody(this->body);
-}
-
-void CDrop::move(Uint32 x, Uint32 y)
-{
-	this->x = x;
-	this->y = y;
 }
 
 void CDrop::draw(SDL_Surface *surface) const
 {
 	int newY = flipYAxis(this->y);
 	Draw_FillCircle(surface, this->x, newY, this->radius, this->color);
-}
-
-void CDrop::update()
-{
-	b2Vec2 pos = this->body->GetPosition();
-	this->x = (Uint32)ceil(meterToPixel(pos.x));
-	this->y = (Uint32)ceil(meterToPixel(pos.y));
 }
 
 b2Body *CDrop::createBody() const
