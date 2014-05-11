@@ -7,6 +7,7 @@ class CAbstractBody
 {
 public:
 	CAbstractBody();
+	CAbstractBody(int x, int y);
 	CAbstractBody(int x, int y, Uint32 color);
 	CAbstractBody(const CAbstractBody &copy);
 	CAbstractBody &operator=(const CAbstractBody &copy);
@@ -27,5 +28,7 @@ protected:
 	b2Body *body;
 
 	virtual b2Body *createBody() const = 0;
+
+	virtual Uint32 randomColor() const;
 };
 

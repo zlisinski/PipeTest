@@ -7,7 +7,14 @@ CAbstractBody::CAbstractBody() :
 	color(0xFFFFFFFF),
 	body(NULL)
 {
-	//this->body = this->createBody();
+}
+
+CAbstractBody::CAbstractBody(int x, int y) :
+	x(x),
+	y(y),
+	body(NULL)
+{
+	this->color = this->randomColor();
 }
 
 CAbstractBody::CAbstractBody(int x, int y, Uint32 color) :
@@ -16,7 +23,6 @@ CAbstractBody::CAbstractBody(int x, int y, Uint32 color) :
 	color(color),
 	body(NULL)
 {
-	//this->body = this->createBody();
 }
 
 CAbstractBody::CAbstractBody(const CAbstractBody &copy) :
@@ -25,7 +31,6 @@ CAbstractBody::CAbstractBody(const CAbstractBody &copy) :
 	color(copy.color),
 	body(NULL)
 {
-	//this->body = copy.createBody();
 }
 
 CAbstractBody &CAbstractBody::operator=(const CAbstractBody &copy)
@@ -34,7 +39,6 @@ CAbstractBody &CAbstractBody::operator=(const CAbstractBody &copy)
 		this->x = copy.x;
 		this->y = copy.y;
 		this->color = copy.color;
-		this->body = copy.createBody();
 	}
 
 	return *this;
@@ -57,4 +61,14 @@ void CAbstractBody::update()
 	b2Vec2 pos = this->body->GetPosition();
 	this->x = meterToPixel(pos.x);
 	this->y = meterToPixel(pos.y);
+}
+
+Uint32 CAbstractBody::randomColor() const {
+	const Uint8 min = 64;
+
+	Uint8 r = min + (rand() % (256 - min));
+	Uint8 g = min + (rand() % (256 - min));
+	Uint8 b = min + (rand() % (256 - min));
+
+	return rgb(r, g, b);
 }

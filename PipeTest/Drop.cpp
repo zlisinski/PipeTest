@@ -1,6 +1,6 @@
-#include <cmath>
 #include "SDL.h"
 #include "SDL_draw.h"
+
 #include "main.h"
 #include "Drop.h"
 
@@ -10,11 +10,15 @@ CDrop::CDrop() :
 	this->radius = 5 + (rand() % 10);
 	this->x = SCREEN_WIDTH - 50 + (rand() % 20);
 	this->y = 668 + (rand() % 20);
-	Uint32 r = rand() % 128;
-	Uint32 g = 128 + (rand() % 128);
-	Uint32 b = rand() % 128;
-	this->color = SDL_MapRGB(screen->format, r, g, b);
+	this->color = this->randomColor();
+	this->body = this->createBody();
+}
 
+CDrop::CDrop(int x, int y, int radius) :
+	CAbstractBody(x, y),
+	radius(radius)
+{
+	this->color = this->randomColor();
 	this->body = this->createBody();
 }
 
@@ -51,6 +55,7 @@ CDrop::~CDrop()
 
 void CDrop::draw(SDL_Surface *surface) const
 {
+	// Flip Y axis because SDL is Y-down while the rest of the code is Y-up
 	int newY = flipYAxis(this->y);
 	Draw_FillCircle(surface, this->x, newY, this->radius, this->color);
 }
@@ -79,4 +84,12 @@ b2Body *CDrop::createBody() const
 	newBody->CreateFixture(&fixtureDef);
 
 	return newBody;
+}
+
+Uint32 CDrop::randomColor() const {
+	// Make a random green color
+	Uint32 r = rand() % 128;
+	Uint32 g = 128 + (rand() % 128);
+	Uint32 b = rand() % 128;
+	return rgb(r, g, b);
 }
