@@ -2,6 +2,8 @@
 
 #include <cmath>
 
+#include <SDL.h>
+
 struct SDL_Surface;
 class b2World;
 
@@ -31,6 +33,11 @@ inline int meterToPixel(float meter)
 inline int flipYAxis(int y)
 {
 	return (-1 * y) + (SCREEN_HEIGHT - 1);
+}
+
+inline Uint32 rgb(Uint8 r, Uint8 g, Uint8 b)
+{
+	return SDL_MapRGB(screen->format, r, g, b);
 }
 
 void debugPrint(char *format, ...);

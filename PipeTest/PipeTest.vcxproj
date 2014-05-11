@@ -37,10 +37,10 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>C:\SDL-1.2.15\include;C:\SDL_draw-1.2.13\include;C:\Box2D_v2.3.0\Box2D;$(IncludePath)</IncludePath>
+    <IncludePath>C:\SDL-1.2.15\include;C:\SDL_draw-1.2.13\include;C:\Box2D_v2.3.0\Box2D;C:\SDL_gfx-2.0.25;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LibraryPath>C:\SDL-1.2.15\lib\x86;C:\SDL_draw-1.2.13\VC2008EE;C:\Box2D_v2.3.0\Box2D\Build\vs2012\bin\Debug;$(LibraryPath)</LibraryPath>
+    <LibraryPath>C:\SDL-1.2.15\lib\x86;C:\SDL_draw-1.2.13\VC2008EE;C:\Box2D_v2.3.0\Box2D\Build\vs2012\bin\Debug;C:\SDL_gfx-2.0.25\Debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -49,7 +49,7 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL.lib;SDLmain.lib;SDL_draw_static.lib;Box2D.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL.lib;SDLmain.lib;SDL_draw_static.lib;Box2D.lib;SDL_gfx.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
     </Link>
   </ItemDefinitionGroup>
@@ -70,6 +70,7 @@
     <ClCompile Include="AbstractBody.cpp" />
     <ClCompile Include="Drop.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Polygon.cpp" />
     <ClCompile Include="Timer.cpp" />
     <ClCompile Include="Wall.cpp" />
   </ItemGroup>
@@ -77,6 +78,7 @@
     <ClInclude Include="AbstractBody.h" />
     <ClInclude Include="Drop.h" />
     <ClInclude Include="main.h" />
+    <ClInclude Include="Polygon.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="Wall.h" />
   </ItemGroup>
