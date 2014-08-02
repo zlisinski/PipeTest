@@ -22,6 +22,7 @@ CPolygon::CPolygon() :
 	this->body = this->createBody();
 }
 
+// Create a polygon with a random color
 CPolygon::CPolygon(int xs[], int ys[], int vertexCount) :
 	CAbstractBody(),
 	vertexCount(vertexCount),
@@ -29,19 +30,10 @@ CPolygon::CPolygon(int xs[], int ys[], int vertexCount) :
 	ys(NULL),
 	b2Vertices(NULL)
 {
-	this->xs = new int[vertexCount];
-	this->ys = new int[vertexCount];
-	memcpy(this->xs, xs, sizeof(int) * this->vertexCount);
-	memcpy(this->ys, ys, sizeof(int) * this->vertexCount);
-
-	this->color = this->randomColor();
-
-	this->calculateXY();
-	this->calculateB2Vertices();
-
-	this->body = this->createBody();
+	this->constructPolygon(xs, ys, vertexCount, this->randomColor());
 }
 
+// Create a polygon with the specified color
 CPolygon::CPolygon(int xs[], int ys[], int vertexCount, Uint32 color) :
 	CAbstractBody(),
 	vertexCount(vertexCount),
@@ -49,10 +41,58 @@ CPolygon::CPolygon(int xs[], int ys[], int vertexCount, Uint32 color) :
 	ys(NULL),
 	b2Vertices(NULL)
 {
+	this->constructPolygon(xs, ys, vertexCount, color);
+}
+
+// Create a rectangle with a random color
+CPolygon::CPolygon(int x, int y, int width, int height) :
+	CAbstractBody(),
+	vertexCount(4),
+	b2Vertices(NULL)
+{
+	this->constructRectangle(x, y, width, height, this->randomColor());
+}
+
+// Create a rectangle with the specified color
+CPolygon::CPolygon(int x, int y, int width, int height, Uint32 color) :
+	CAbstractBody(),
+	vertexCount(4),
+	b2Vertices(NULL)
+{
+	this->constructRectangle(x, y, width, height, color);
+}
+
+// Called from constructor to create a polygon
+void CPolygon::constructPolygon(int xs[], int ys[], int vertexCount, Uint32 color)
+{
 	this->xs = new int[vertexCount];
 	this->ys = new int[vertexCount];
 	memcpy(this->xs, xs, sizeof(int) * vertexCount);
 	memcpy(this->ys, ys, sizeof(int) * vertexCount);
+
+	this->color = color;
+
+	this->calculateXY();
+	this->calculateB2Vertices();
+
+	this->body = this->createBody();
+}
+
+// Called from constructor to create a rectangle
+void CPolygon::constructRectangle(int x, int y, int width, int height, Uint32 color)
+{
+	// Set vertices clockwise from the bottom left
+	this->xs = new int[4];
+	this->xs[0] = x;
+	this->xs[1] = x;
+	this->xs[2] = x + width;
+	this->xs[3] = x + width;
+
+	this->ys = new int[4];
+	this->ys[0] = y - height;
+	this->ys[1] = y;
+	this->ys[2] = y;
+	this->ys[3] = y - height;
 
 	this->color = color;
 
@@ -172,6 +212,7 @@ void CPolygon::calculateXY()
 	}
 
 	// Swap the origin point into the 0 index
+	// This can break the order of vertices (clockwise or counter-clockwise), does this matter? *POSSIBLE BUG*
 	if (originIndex != 0) {
 		int tempX = this->xs[0];
 		int tempY = this->ys[0];
