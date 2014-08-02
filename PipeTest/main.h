@@ -18,7 +18,6 @@ const float TIME_STEP = 1.0f / 60.0f;
 const int VELOCITY_ITER = 8;
 const int POSITION_ITER = 3;
 
-
 // 1px == 1cm
 inline float pixelToMeter(float pixel)
 {
@@ -30,6 +29,10 @@ inline int meterToPixel(float meter)
 	return (int)floor(meter * 100);
 }
 
+// Converts Y-up to Y-down coordinates and vice versa
+// Example, with a screen height of 480px:
+//          flipYAxis(100) = 379;
+//          flipYAxis(379) = 100;
 inline int flipYAxis(int y)
 {
 	return (-1 * y) + (SCREEN_HEIGHT - 1);

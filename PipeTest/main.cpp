@@ -14,10 +14,20 @@
 #include "Wall.h"
 #include "Polygon.h"
 
-void drawScreen(SDL_Surface *screen, std::list<CDrop> &drops, std::list<CAbstractBody *> &walls);
+// SetLayoutFunc is a function pointer to a setLayout*() function
+typedef void (*SetLayoutFunc) (std::list<CDrop> &drops, std::list<CAbstractBody *> &walls);
 
+static void drawScreen(SDL_Surface *screen, std::list<CDrop> &drops, std::list<CAbstractBody *> &walls);
+static void setLayout1(std::list<CDrop> &drops, std::list<CAbstractBody *> &walls);
+static void setLayout2(std::list<CDrop> &drops, std::list<CAbstractBody *> &walls);
+static void setLayout3(std::list<CDrop> &drops, std::list<CAbstractBody *> &walls);
+static void cleanup(std::list<CDrop> &drops, std::list<CAbstractBody *> &walls);
+
+// Globals for convenience, so they don't have to be passed in to every function
 SDL_Surface *screen = NULL;
 b2World *world = NULL;
+
+const int LAYOUT_COUNT = 3;
 
 int main(int argc, char* args[])
 {
@@ -26,7 +36,9 @@ int main(int argc, char* args[])
 	int frame = 0;
 	CTimer fps;
 	std::list<CDrop> drops;
-	std::list<CAbstractBody *> walls;
+	std::list<CAbstractBody *> walls; // I know pointers aren't the best here, I'll change it later
+	int curLayout = 0;
+	SetLayoutFunc layoutFuncs[LAYOUT_COUNT] = {setLayout1, setLayout2, setLayout3};
 
 	srand((unsigned int)time(NULL));
 
@@ -49,28 +61,15 @@ int main(int argc, char* args[])
 	gravity.Set(0.0f, -10.0f);
 	world = new b2World(gravity);
 
-	// Add walls
-	walls.push_back(new CWall(0, 10, 1024, 10, rgb(150, 75, 0)));
-	walls.push_back(new CWall(650, 400, 100, 300, rgb(0, 0, 128)));
-
-	int xs[] = {100, 150, 100};
-	int ys[] = {10, 10, 60};
-	walls.push_back(new CPolygon(xs, ys, 3));
-
-	int xs2[] = {400, 450, 400};
-	int ys2[] = {100, 100, 150};
-	walls.push_back(new CPolygon(xs2, ys2, 3));
-
-	int xs3[] = {800, 850, 875};
-	int ys3[] = {10, 10, 35};
-	walls.push_back(new CPolygon(xs3, ys3, 3));
+	// Setup the walls and polygons
+	layoutFuncs[curLayout](drops, walls);
 
 	// Main loop
 	while (running) {
 		fps.start();
 
 		char title[256];
-		sprintf_s(title, "Pipe Test - Drop count = %d", drops.size());
+		sprintf_s(title, "Pipe Test - Press 'z' to change layout. Drop count = %d", drops.size());
 		SDL_WM_SetCaption(title, NULL);
 
 		world->Step(TIME_STEP, VELOCITY_ITER, POSITION_ITER);
@@ -89,6 +88,12 @@ int main(int argc, char* args[])
 					running = false;
 					break;
 				}
+				if (keyPressed == SDLK_z) {
+					// Change layout
+					curLayout = (curLayout + 1) % LAYOUT_COUNT;
+					cleanup(drops, walls);
+					layoutFuncs[curLayout](drops, walls);
+				}
 			}
 		}
 
@@ -99,8 +104,7 @@ int main(int argc, char* args[])
 	}
 
 	// Cleanup
-	drops.clear();
-	walls.clear(); // Yes, I know this leaks
+	cleanup(drops, walls);
 	delete world;
 	world = NULL;
 	SDL_Quit();
@@ -108,7 +112,7 @@ int main(int argc, char* args[])
 	return 0;
 }
 
-void drawScreen(SDL_Surface *screen, std::list<CDrop> &drops, std::list<CAbstractBody *> &walls)
+static void drawScreen(SDL_Surface *screen, std::list<CDrop> &drops, std::list<CAbstractBody *> &walls)
 {
 	if (SDL_MUSTLOCK(screen)) {
 		if (SDL_LockSurface(screen) < 0)
@@ -159,6 +163,48 @@ void drawScreen(SDL_Surface *screen, std::list<CDrop> &drops, std::list<CAbstrac
 		SDL_UnlockSurface(screen);
 
 	SDL_Flip(screen);
+}
+
+static void setLayout1(std::list<CDrop> &drops, std::list<CAbstractBody *> &walls)
+{
+	// Add walls
+	walls.push_back(new CWall(0, 10, 1024, 10, rgb(150, 75, 0)));
+	walls.push_back(new CWall(650, 400, 100, 50, rgb(0, 0, 128)));
+
+	int xs[] = {400, 450, 400};
+	int ys[] = {100, 100, 150};
+	walls.push_back(new CPolygon(xs, ys, 3));
+
+	int xs2[] = {800, 850, 875};
+	int ys2[] = {10, 10, 35};
+	walls.push_back(new CPolygon(xs2, ys2, 3));
+}
+
+static void setLayout2(std::list<CDrop> &drops, std::list<CAbstractBody *> &walls)
+{
+	// Add walls
+	walls.push_back(new CWall(0, 10, 1024, 10, rgb(150, 75, 0)));
+
+	// Add pentagon
+	int xs[] = {550, 650, 600, 500, 450};
+	int ys[] = {300, 200, 100, 100, 200};
+	walls.push_back(new CPolygon(xs, ys, 5));
+}
+
+static void setLayout3(std::list<CDrop> &drops, std::list<CAbstractBody *> &walls)
+{
+	// Add walls
+	walls.push_back(new CWall(0, 10, 1024, 10, rgb(150, 75, 0)));
+}
+
+static void cleanup(std::list<CDrop> &drops, std::list<CAbstractBody *> &walls)
+{
+	drops.clear();
+
+	for (std::list<CAbstractBody *>::iterator wall = walls.begin(); wall != walls.end(); ++wall) {
+		delete *wall;
+	}
+	walls.clear();
 }
 
 void debugPrint(char *format, ...)
