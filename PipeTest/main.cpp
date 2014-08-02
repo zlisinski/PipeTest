@@ -13,15 +13,16 @@
 #include "Drop.h"
 #include "Wall.h"
 #include "Polygon.h"
+#include "Pipe.h"
 
 // SetLayoutFunc is a function pointer to a setLayout*() function
-typedef void (*SetLayoutFunc) (std::list<CDrop> &drops, std::list<CAbstractBody *> &walls);
+typedef void (*SetLayoutFunc) (std::list<CAbstractBody *> &bodies);
 
-static void drawScreen(SDL_Surface *screen, std::list<CDrop> &drops, std::list<CAbstractBody *> &walls);
-static void setLayout1(std::list<CDrop> &drops, std::list<CAbstractBody *> &walls);
-static void setLayout2(std::list<CDrop> &drops, std::list<CAbstractBody *> &walls);
-static void setLayout3(std::list<CDrop> &drops, std::list<CAbstractBody *> &walls);
-static void cleanup(std::list<CDrop> &drops, std::list<CAbstractBody *> &walls);
+static void drawScreen(SDL_Surface *screen, std::list<CDrop> &drops, std::list<CAbstractBody *> &bodies);
+static void setLayout1(std::list<CAbstractBody *> &bodies);
+static void setLayout2(std::list<CAbstractBody *> &bodies);
+static void setLayout3(std::list<CAbstractBody *> &bodies);
+static void cleanup(std::list<CDrop> &drops, std::list<CAbstractBody *> &bodies);
 
 // Globals for convenience, so they don't have to be passed in to every function
 SDL_Surface *screen = NULL;
@@ -36,7 +37,7 @@ int main(int argc, char* args[])
 	int frame = 0;
 	CTimer fps;
 	std::list<CDrop> drops;
-	std::list<CAbstractBody *> walls; // I know pointers aren't the best here, I'll change it later
+	std::list<CAbstractBody *> bodies; // I know pointers aren't the best here, I'll change it later
 	int curLayout = 0;
 	SetLayoutFunc layoutFuncs[LAYOUT_COUNT] = {setLayout1, setLayout2, setLayout3};
 
@@ -62,7 +63,7 @@ int main(int argc, char* args[])
 	world = new b2World(gravity);
 
 	// Setup the walls and polygons
-	layoutFuncs[curLayout](drops, walls);
+	layoutFuncs[curLayout](bodies);
 
 	// Main loop
 	while (running) {
@@ -74,7 +75,7 @@ int main(int argc, char* args[])
 
 		world->Step(TIME_STEP, VELOCITY_ITER, POSITION_ITER);
 
-		drawScreen(screen, drops, walls);
+		drawScreen(screen, drops, bodies);
 
 		while (SDL_PollEvent(&event)) {
 			if (event.type == SDL_QUIT) {
@@ -91,8 +92,8 @@ int main(int argc, char* args[])
 				if (keyPressed == SDLK_z) {
 					// Change layout
 					curLayout = (curLayout + 1) % LAYOUT_COUNT;
-					cleanup(drops, walls);
-					layoutFuncs[curLayout](drops, walls);
+					cleanup(drops, bodies);
+					layoutFuncs[curLayout](bodies);
 				}
 			}
 		}
@@ -104,7 +105,7 @@ int main(int argc, char* args[])
 	}
 
 	// Cleanup
-	cleanup(drops, walls);
+	cleanup(drops, bodies);
 	delete world;
 	world = NULL;
 	SDL_Quit();
@@ -112,7 +113,7 @@ int main(int argc, char* args[])
 	return 0;
 }
 
-static void drawScreen(SDL_Surface *screen, std::list<CDrop> &drops, std::list<CAbstractBody *> &walls)
+static void drawScreen(SDL_Surface *screen, std::list<CDrop> &drops, std::list<CAbstractBody *> &bodies)
 {
 	if (SDL_MUSTLOCK(screen)) {
 		if (SDL_LockSurface(screen) < 0)
@@ -154,9 +155,9 @@ static void drawScreen(SDL_Surface *screen, std::list<CDrop> &drops, std::list<C
 		}
 	}
 
-	// Draw walls
-	for (std::list<CAbstractBody *>::iterator wall = walls.begin(); wall != walls.end(); ++wall) {
-		(*wall)->draw(screen);
+	// Draw bodies
+	for (std::list<CAbstractBody *>::iterator body = bodies.begin(); body != bodies.end(); ++body) {
+		(*body)->draw(screen);
 	}
 
 	if (SDL_MUSTLOCK(screen))
@@ -165,46 +166,48 @@ static void drawScreen(SDL_Surface *screen, std::list<CDrop> &drops, std::list<C
 	SDL_Flip(screen);
 }
 
-static void setLayout1(std::list<CDrop> &drops, std::list<CAbstractBody *> &walls)
+static void setLayout1(std::list<CAbstractBody *> &bodies)
 {
-	// Add walls
-	walls.push_back(new CWall(0, 10, 1024, 10, rgb(150, 75, 0)));
-	walls.push_back(new CWall(650, 400, 100, 50, rgb(0, 0, 128)));
+	// Add bodies
+	bodies.push_back(new CWall(0, 10, 1024, 10, rgb(150, 75, 0)));
+	bodies.push_back(new CWall(650, 400, 100, 50, rgb(0, 0, 128)));
 
 	int xs[] = {400, 450, 400};
 	int ys[] = {100, 100, 150};
-	walls.push_back(new CPolygon(xs, ys, 3));
+	bodies.push_back(new CPolygon(xs, ys, 3));
 
 	int xs2[] = {800, 850, 875};
 	int ys2[] = {10, 10, 35};
-	walls.push_back(new CPolygon(xs2, ys2, 3));
+	bodies.push_back(new CPolygon(xs2, ys2, 3));
 }
 
-static void setLayout2(std::list<CDrop> &drops, std::list<CAbstractBody *> &walls)
+static void setLayout2(std::list<CAbstractBody *> &bodies)
 {
-	// Add walls
-	walls.push_back(new CWall(0, 10, 1024, 10, rgb(150, 75, 0)));
+	// Add bodies
+	bodies.push_back(new CWall(0, 10, 1024, 10, rgb(150, 75, 0)));
 
 	// Add pentagon
 	int xs[] = {550, 650, 600, 500, 450};
 	int ys[] = {300, 200, 100, 100, 200};
-	walls.push_back(new CPolygon(xs, ys, 5));
+	bodies.push_back(new CPolygon(xs, ys, 5));
 }
 
-static void setLayout3(std::list<CDrop> &drops, std::list<CAbstractBody *> &walls)
+static void setLayout3(std::list<CAbstractBody *> &bodies)
 {
-	// Add walls
-	walls.push_back(new CWall(0, 10, 1024, 10, rgb(150, 75, 0)));
+	// Add bodies
+	bodies.push_back(new CWall(0, 10, 1024, 10, rgb(150, 75, 0)));
+
+	bodies.push_back(new CPipe(600, 300, 100, 100));
 }
 
-static void cleanup(std::list<CDrop> &drops, std::list<CAbstractBody *> &walls)
+static void cleanup(std::list<CDrop> &drops, std::list<CAbstractBody *> &bodies)
 {
 	drops.clear();
 
-	for (std::list<CAbstractBody *>::iterator wall = walls.begin(); wall != walls.end(); ++wall) {
-		delete *wall;
+	for (std::list<CAbstractBody *>::iterator body = bodies.begin(); body != bodies.end(); ++body) {
+		delete *body;
 	}
-	walls.clear();
+	bodies.clear();
 }
 
 void debugPrint(char *format, ...)

@@ -146,8 +146,12 @@ b2Body *CPolygon::createBody() const
 	b2PolygonShape shape;
 	shape.Set(this->b2Vertices, this->vertexCount);
 
+	// Set collision properties
 	b2FixtureDef fixtureDef;
 	fixtureDef.shape = &shape;
+	fixtureDef.filter.categoryBits = WALL_CATEGORY;
+	fixtureDef.filter.maskBits = WALL_MASK;
+	fixtureDef.filter.groupIndex = 0;
 
 	newBody->CreateFixture(&fixtureDef);
 

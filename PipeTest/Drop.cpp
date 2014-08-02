@@ -79,7 +79,11 @@ b2Body *CDrop::createBody() const
 	fixtureDef.density = 1.0f;
 	fixtureDef.friction = 0.3f;
 	fixtureDef.restitution = 0.25f;
-	fixtureDef.filter.groupIndex = -1;
+	
+	// Set collision properties
+	fixtureDef.filter.categoryBits = DROP_CATEGORY;
+	fixtureDef.filter.maskBits = DROP_MASK;
+	fixtureDef.filter.groupIndex = 0;
 
 	newBody->CreateFixture(&fixtureDef);
 

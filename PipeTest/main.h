@@ -18,6 +18,14 @@ const float TIME_STEP = 1.0f / 60.0f;
 const int VELOCITY_ITER = 8;
 const int POSITION_ITER = 3;
 
+const short DROP_CATEGORY = 1;
+const short WALL_CATEGORY = 2; // Walls and Polygons
+const short PIPE_CATEGORY = 4;
+
+const unsigned short DROP_MASK = 0xFFFA; // Drops don't collide with other drops and pipes 1111 1111 1111 1010 
+const unsigned short WALL_MASK = 0xFFFF; // Walls collide with everything
+const unsigned short PIPE_MASK = 0xFFFE; // Pipes don't collide with drops 1111 1111 1111 1110
+
 // 1px == 1cm
 inline float pixelToMeter(float pixel)
 {

@@ -3,9 +3,9 @@
 #include "Box2D/Box2D.h"
 
 #include "main.h"
-#include "Wall.h"
+#include "Pipe.h"
 
-CWall::CWall() :
+CPipe::CPipe() :
 	CAbstractBody(),
 	width(100),
 	height(100)
@@ -13,7 +13,15 @@ CWall::CWall() :
 	this->body = this->createBody();
 }
 
-CWall::CWall(int x, int y, int width, int height, Uint32 color) :
+CPipe::CPipe(int x, int y, int width, int height) :
+	CAbstractBody(x, y),
+	width(width),
+	height(height)
+{
+	this->body = this->createBody();
+}
+
+CPipe::CPipe(int x, int y, int width, int height, Uint32 color) :
 	CAbstractBody(x, y, color),
 	width(width),
 	height(height)
@@ -21,7 +29,7 @@ CWall::CWall(int x, int y, int width, int height, Uint32 color) :
 	this->body = this->createBody();
 }
 
-CWall::CWall(const CWall &copy) :
+CPipe::CPipe(const CPipe &copy) :
 	CAbstractBody(copy),
 	width(copy.width),
 	height(copy.height)
@@ -29,7 +37,7 @@ CWall::CWall(const CWall &copy) :
 	this->body = copy.createBody();
 }
 
-CWall &CWall::operator=(const CWall &copy)
+CPipe &CPipe::operator=(const CPipe &copy)
 {
 	if (this != &copy) {
 		this->x = copy.x;
@@ -43,17 +51,17 @@ CWall &CWall::operator=(const CWall &copy)
 	return *this;
 }
 
-CWall::~CWall()
+CPipe::~CPipe()
 {
 }
 
-void CWall::draw(SDL_Surface *surface) const
+void CPipe::draw(SDL_Surface *surface) const
 {
 	int newY = flipYAxis(this->y);
 	Draw_FillRect(surface, x, newY, width, height, color);
 }
 
-b2Body *CWall::createBody() const
+b2Body *CPipe::createBody() const
 {
 	b2Body *newBody;
 
@@ -68,8 +76,8 @@ b2Body *CWall::createBody() const
 
 	// Set collision properties
 	b2Filter filter;
-	filter.categoryBits = WALL_CATEGORY;
-	filter.maskBits = WALL_MASK;
+	filter.categoryBits = PIPE_CATEGORY;
+	filter.maskBits = PIPE_MASK;
 	filter.groupIndex = 0;
 	fixture->SetFilterData(filter);
 
