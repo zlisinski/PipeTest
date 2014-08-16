@@ -18,6 +18,7 @@
 typedef void (*SetLayoutFunc) (std::list<CAbstractBody *> &bodies);
 
 static void drawScreen(SDL_Surface *screen, std::list<CDrop> &drops, std::list<CAbstractBody *> &bodies);
+static void drawGrid(SDL_Surface *screen);
 static void setLayout1(std::list<CAbstractBody *> &bodies);
 static void setLayout2(std::list<CAbstractBody *> &bodies);
 static void setLayout3(std::list<CAbstractBody *> &bodies);
@@ -26,6 +27,7 @@ static void cleanup(std::list<CDrop> &drops, std::list<CAbstractBody *> &bodies)
 // Globals for convenience, so they don't have to be passed in to every function
 SDL_Surface *screen = NULL;
 b2World *world = NULL;
+bool gridVisible = true;
 
 const int LAYOUT_COUNT = 3;
 
@@ -69,7 +71,7 @@ int main(int argc, char* args[])
 		fps.start();
 
 		char title[256];
-		sprintf_s(title, "Pipe Test - Press 'z' to change layout. Drop count = %d", drops.size());
+		sprintf_s(title, "Pipe Test - Press 'z' to change layout, Press 'x' to toggle grid. Drop count = %d", drops.size());
 		SDL_WM_SetCaption(title, NULL);
 
 		world->Step(TIME_STEP, VELOCITY_ITER, POSITION_ITER);
@@ -85,8 +87,13 @@ int main(int argc, char* args[])
 			if (event.type == SDL_KEYDOWN) {
 				SDLKey keyPressed = event.key.keysym.sym;
 				if (keyPressed == SDLK_q) {
+					// Quit running
 					running = false;
 					break;
+				}
+				if (keyPressed == SDLK_x) {
+					// Toggle gridVisible
+					gridVisible = !gridVisible;
 				}
 				if (keyPressed == SDLK_z) {
 					// Change layout
@@ -123,14 +130,8 @@ static void drawScreen(SDL_Surface *screen, std::list<CDrop> &drops, std::list<C
 	SDL_FillRect(screen, NULL, 0);
 
 	// Draw grid
-	for (int x = 0; x < SCREEN_WIDTH; x += 50) {
-		Draw_VLine(screen, x, 0, SCREEN_HEIGHT - 1, rgb(128, 128, 128));
-	}
-	for (int y = 0; y < SCREEN_HEIGHT; y += 50) {
-		// Flip Y axis because SDL is Y-down while the rest of the code is Y-up
-		int newY = flipYAxis(y);
-		Draw_HLine(screen, 0, newY, SCREEN_WIDTH - 1, rgb(128, 128, 128));
-	}
+	if (gridVisible)
+		drawGrid(screen);
 
 	// Add a new drop to the end each frame
 	drops.push_back(CDrop());
@@ -163,6 +164,36 @@ static void drawScreen(SDL_Surface *screen, std::list<CDrop> &drops, std::list<C
 		SDL_UnlockSurface(screen);
 
 	SDL_Flip(screen);
+}
+
+static void drawGrid(SDL_Surface *screen)
+{
+	int color;
+
+	for (int x = 0; x < SCREEN_WIDTH; x += 10) {
+		if (x % 100 == 0)
+			color = rgb(224, 224, 224);
+		else if (x % 50 == 0)
+			color = rgb(128, 128, 128);
+		else
+			color = rgb(32, 32, 32);
+
+		Draw_VLine(screen, x, 0, SCREEN_HEIGHT - 1, color);
+	}
+
+	for (int y = 0; y < SCREEN_HEIGHT; y += 10) {
+		if (y % 100 == 0)
+			color = rgb(224, 224, 224);
+		else if (y % 50 == 0)
+			color = rgb(128, 128, 128);
+		else
+			color = rgb(32, 32, 32);
+
+		// Flip Y axis because SDL is Y-down while the rest of the code is Y-up
+		int newY = flipYAxis(y);
+
+		Draw_HLine(screen, 0, newY, SCREEN_WIDTH - 1, color);
+	}
 }
 
 static void setLayout1(std::list<CAbstractBody *> &bodies)
