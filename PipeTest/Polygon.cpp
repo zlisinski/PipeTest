@@ -89,14 +89,15 @@ void CPolygon::constructRectangle(int x, int y, int width, int height, Uint32 co
 	this->xs[3] = x + width;
 
 	this->ys = new int[4];
-	this->ys[0] = y - height;
-	this->ys[1] = y;
-	this->ys[2] = y;
-	this->ys[3] = y - height;
+	this->ys[0] = y;
+	this->ys[1] = y + height;
+	this->ys[2] = y + height;
+	this->ys[3] = y;
 
 	this->color = color;
 
-	this->calculateXY();
+	this->x = this->xs[0];
+	this->y = this->ys[0];
 	this->calculateB2Vertices();
 
 	this->body = this->createBody();
@@ -108,8 +109,8 @@ CPolygon::CPolygon(const CPolygon &copy) :
 	this->vertexCount = copy.vertexCount;
 	this->xs = new int[vertexCount];
 	this->ys = new int[vertexCount];
-	memcpy(this->xs, copy.xs, sizeof(int) * this->vertexCount);
-	memcpy(this->ys, copy.ys, sizeof(int) * this->vertexCount);
+	memcpy(this->xs, copy.xs, sizeof(*this->xs) * this->vertexCount);
+	memcpy(this->ys, copy.ys, sizeof(*this->ys) * this->vertexCount);
 
 	this->color = copy.color;
 
@@ -132,9 +133,9 @@ CPolygon &CPolygon::operator=(const CPolygon &copy)
 		this->xs = new int[vertexCount];
 		this->ys = new int[vertexCount];
 		this->b2Vertices = new b2Vec2[vertexCount];
-		memcpy(this->xs, copy.xs, sizeof(int) * this->vertexCount);
-		memcpy(this->ys, copy.ys, sizeof(int) * this->vertexCount);
-		memcpy(this->b2Vertices, copy.b2Vertices, sizeof(b2Vec2) * this->vertexCount);
+		memcpy(this->xs, copy.xs, sizeof(*this->xs) * this->vertexCount);
+		memcpy(this->ys, copy.ys, sizeof(*this->ys) * this->vertexCount);
+		memcpy(this->b2Vertices, copy.b2Vertices, sizeof(*this->b2Vertices) * this->vertexCount);
 
 		this->color = copy.color;
 		this->body = copy.createBody();

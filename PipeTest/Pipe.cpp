@@ -58,7 +58,7 @@ CPipe::~CPipe()
 void CPipe::draw(SDL_Surface *surface) const
 {
 	int newY = flipYAxis(this->y);
-	Draw_FillRect(surface, x, newY, width, height, color);
+	Draw_FillRect(surface, x, newY-height, width, height, color);
 }
 
 b2Body *CPipe::createBody() const
@@ -66,20 +66,36 @@ b2Body *CPipe::createBody() const
 	b2Body *newBody;
 
 	b2BodyDef bodyDef;
-	bodyDef.position.Set(pixelToMeter((float)this->x + (this->width / 2)), pixelToMeter((float)this->y - (this->height / 2)));
+	bodyDef.position.Set(pixelToMeter((float)this->x), pixelToMeter((float)this->y));
 
 	newBody = world->CreateBody(&bodyDef);
 
-	b2PolygonShape box;
-	box.SetAsBox(pixelToMeter((float)this->width / 2), pixelToMeter((float)this->height / 2));
-	b2Fixture *fixture = newBody->CreateFixture(&box, 0);
+	int xs[4] = {this->x, this->x, this->x + this->width, this->x + this->width};
+	int ys[4] = {this->y, this->y + this->height, this->y + this->height, this->y};
+	b2Vec2 *b2Vertices = new b2Vec2[4];
+
+	// The first vertex is (this->x, this->y)
+	b2Vec2 origin = b2Vec2(pixelToMeter((float)this->x), pixelToMeter((float)this->y));
+
+	// Subtract the origin vertex from each vertext
+	for (int i = 0; i < 4; i++) {
+		b2Vec2 vec = b2Vec2(pixelToMeter((float)xs[i]), pixelToMeter((float)ys[i]));
+		b2Vertices[i] = vec - origin;
+	}
+
+	b2PolygonShape shape;
+	shape.Set(b2Vertices, 4);
+
+	delete [] b2Vertices;
 
 	// Set collision properties
-	b2Filter filter;
-	filter.categoryBits = PIPE_CATEGORY;
-	filter.maskBits = PIPE_MASK;
-	filter.groupIndex = 0;
-	fixture->SetFilterData(filter);
+	b2FixtureDef fixtureDef;
+	fixtureDef.shape = &shape;
+	fixtureDef.filter.categoryBits = PIPE_CATEGORY;
+	fixtureDef.filter.maskBits = PIPE_MASK;
+	fixtureDef.filter.groupIndex = 0;
+
+	newBody->CreateFixture(&fixtureDef);
 
 	return newBody;
 }

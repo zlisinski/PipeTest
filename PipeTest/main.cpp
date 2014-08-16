@@ -199,8 +199,8 @@ static void drawGrid(SDL_Surface *screen)
 static void setLayout1(std::list<CAbstractBody *> &bodies)
 {
 	// Add bodies
-	bodies.push_back(new CPolygon(0, 10, 1024, 10, rgb(150, 75, 0)));
-	bodies.push_back(new CPolygon(650, 400, 100, 50, rgb(0, 0, 128)));
+	bodies.push_back(new CPolygon(0, 0, 1024, 10, rgb(150, 75, 0)));
+	bodies.push_back(new CPolygon(650, 350, 100, 50, rgb(0, 0, 128)));
 
 	int xs[] = {400, 450, 400};
 	int ys[] = {100, 100, 150};
@@ -214,20 +214,26 @@ static void setLayout1(std::list<CAbstractBody *> &bodies)
 static void setLayout2(std::list<CAbstractBody *> &bodies)
 {
 	// Add bodies
-	bodies.push_back(new CPolygon(0, 10, 1024, 10, rgb(150, 75, 0)));
+	bodies.push_back(new CPolygon(0, 0, 1024, 10, rgb(150, 75, 0)));
 
 	// Add pentagon
 	int xs[] = {550, 650, 600, 500, 450};
 	int ys[] = {300, 200, 100, 100, 200};
 	bodies.push_back(new CPolygon(xs, ys, 5));
+	
+	// Add triangle
+	int xs2[] = {700, 750, 725};
+	int ys2[] = {150, 150, 250};
+	bodies.push_back(new CPolygon(xs2, ys2, 3));
 }
 
 static void setLayout3(std::list<CAbstractBody *> &bodies)
 {
 	// Add bodies
-	bodies.push_back(new CPolygon(0, 10, 1024, 10, rgb(150, 75, 0)));
+	bodies.push_back(new CPolygon(0, 0, 1024, 10, rgb(150, 75, 0)));
 
-	bodies.push_back(new CPipe(600, 300, 100, 100));
+	//bodies.push_back(new CPipe(600, 200, 100, 100));
+	bodies.push_back(new CPipe(600, 200, 100, 100));
 }
 
 static void cleanup(std::list<CDrop> &drops, std::list<CAbstractBody *> &bodies)
