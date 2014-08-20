@@ -12,7 +12,7 @@ public:
 	CDrop &operator=(const CDrop &copy);
 	virtual ~CDrop();
 
-	virtual void draw(SDL_Surface *surface) const;
+	virtual void draw(SDL_Surface *surface, unsigned int frame) const;
 
 	int getRadius() const {return radius;}
 

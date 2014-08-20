@@ -1,6 +1,7 @@
 #pragma once
 
 #include "abstractbody.h"
+#include "Drop.h"
 
 class CPipe : public CAbstractBody
 {
@@ -12,7 +13,10 @@ public:
 	CPipe &operator=(const CPipe &copy);
 	virtual ~CPipe();
 	
-	virtual void draw(SDL_Surface *surface) const;
+	virtual void draw(SDL_Surface *surface, unsigned int frame) const;
+
+	void captureDrop(CDrop &drop, unsigned int frame);
+	void captureDrops(std::list<CDrop> &drops, unsigned int frame);
 
 	int getWidth() const {return width;}
 	int getHeight() const {return height;}
@@ -20,6 +24,8 @@ public:
 private:
 	int width;
 	int height;
+	unsigned int frame;
+	std::list<CDrop> drops;
 	
 	virtual b2Body *createBody() const;
 };

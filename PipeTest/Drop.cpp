@@ -53,7 +53,7 @@ CDrop::~CDrop()
 {
 }
 
-void CDrop::draw(SDL_Surface *surface) const
+void CDrop::draw(SDL_Surface *surface, unsigned int frame) const
 {
 	// Flip Y axis because SDL is Y-down while the rest of the code is Y-up
 	int newY = flipYAxis(this->y);

@@ -151,7 +151,7 @@ CPolygon::~CPolygon()
 	delete [] this->b2Vertices;
 }
 
-void CPolygon::draw(SDL_Surface *surface) const
+void CPolygon::draw(SDL_Surface *surface, unsigned int frame) const
 {
 	// Flip Y axis because SDL is Y-down while the rest of the code is Y-up. Also convert Sint32 to Sint16.
 	Sint16 *flippedYs = new Sint16[this->vertexCount];

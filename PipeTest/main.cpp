@@ -39,6 +39,7 @@ int main(int argc, char* args[])
 	CTimer fps;
 	std::list<CDrop> drops;
 	std::list<CAbstractBody *> bodies; // I know pointers aren't the best here, I'll change it later
+	std::list<CPipe> pipes;
 	int curLayout = 0;
 	SetLayoutFunc layoutFuncs[LAYOUT_COUNT] = {setLayout1, setLayout2, setLayout3};
 
@@ -121,6 +122,8 @@ int main(int argc, char* args[])
 
 static void drawScreen(SDL_Surface *screen, std::list<CDrop> &drops, std::list<CAbstractBody *> &bodies)
 {
+	static unsigned int frame = 0;
+
 	if (SDL_MUSTLOCK(screen)) {
 		if (SDL_LockSurface(screen) < 0)
 			return;
@@ -133,7 +136,7 @@ static void drawScreen(SDL_Surface *screen, std::list<CDrop> &drops, std::list<C
 	if (gridVisible)
 		drawGrid(screen);
 
-	// Add a new drop to the end each frame
+	// Add a new drop to the end each frame. Creating a drop and immediately making a copy in the list probably isn't the best solution.
 	drops.push_back(CDrop());
 
 	std::list<CDrop>::iterator drop = drops.begin();
@@ -146,7 +149,7 @@ static void drawScreen(SDL_Surface *screen, std::list<CDrop> &drops, std::list<C
 		    ((drop->getY() - drop->getRadius()) > 0) &&
 		    ((drop->getY() + drop->getRadius()) < SCREEN_HEIGHT)) {
 				// Draw drop if it is still on the screen
-				drop->draw(screen);
+				drop->draw(screen, frame);
 				++drop;
 		}
 		else {
@@ -157,13 +160,22 @@ static void drawScreen(SDL_Surface *screen, std::list<CDrop> &drops, std::list<C
 
 	// Draw bodies
 	for (std::list<CAbstractBody *>::iterator body = bodies.begin(); body != bodies.end(); ++body) {
-		(*body)->draw(screen);
+		(*body)->draw(screen, frame);
+
+		// If the body is a pipe, check if any drop can be captured by it
+		CPipe *pipe = dynamic_cast<CPipe *>(*body);
+		if (pipe != NULL) {
+			pipe->captureDrops(drops, frame);
+		}
 	}
 
 	if (SDL_MUSTLOCK(screen))
 		SDL_UnlockSurface(screen);
 
 	SDL_Flip(screen);
+
+	// This is safe. It overflows after two years at 60fps
+	frame++;
 }
 
 static void drawGrid(SDL_Surface *screen)
@@ -232,8 +244,9 @@ static void setLayout3(std::list<CAbstractBody *> &bodies)
 	// Add bodies
 	bodies.push_back(new CPolygon(0, 0, 1024, 10, rgb(150, 75, 0)));
 
-	//bodies.push_back(new CPipe(600, 200, 100, 100));
+	// Add pipes
 	bodies.push_back(new CPipe(600, 200, 100, 100));
+	bodies.push_back(new CPipe(400, 100, 100, 100));
 }
 
 static void cleanup(std::list<CDrop> &drops, std::list<CAbstractBody *> &bodies)

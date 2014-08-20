@@ -15,7 +15,7 @@ public:
 
 	virtual void move(Uint32 x, Uint32 y);
 	virtual void update();
-	virtual void draw(SDL_Surface *surface) const = 0;
+	virtual void draw(SDL_Surface *surface, unsigned int frame) const = 0;
 
 	int getX() const {return x;}
 	int getY() const {return y;}
