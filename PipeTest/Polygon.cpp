@@ -1,5 +1,3 @@
-#include "Polygon.h"
-
 #include "SDL.h"
 #include "SDL_draw.h"
 #include "SDL_gfxPrimitives.h"
@@ -215,12 +213,8 @@ void CPolygon::calculateXY()
 	// Swap the origin point into the 0 index
 	// This can break the order of vertices (clockwise or counter-clockwise), does this matter? *POSSIBLE BUG*
 	if (originIndex != 0) {
-		int tempX = this->xs[0];
-		int tempY = this->ys[0];
-		this->xs[0] = this->xs[originIndex];
-		this->ys[0] = this->ys[originIndex];
-		this->xs[originIndex] = tempX;
-		this->ys[originIndex] = tempY;
+		std::swap(this->xs[0], this->xs[originIndex]);
+		std::swap(this->ys[0], this->ys[originIndex]);
 	}
 
 	this->x = this->xs[0];
