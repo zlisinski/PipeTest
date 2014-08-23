@@ -40,7 +40,7 @@ int main(int argc, char* args[])
 	std::list<CDrop> drops;
 	std::list<CAbstractBody *> bodies; // I know pointers aren't the best here, I'll change it later
 	std::list<CPipe> pipes;
-	int curLayout = 0;
+	int curLayout = 2;
 	SetLayoutFunc layoutFuncs[LAYOUT_COUNT] = {setLayout1, setLayout2, setLayout3};
 
 	srand((unsigned int)time(NULL));
@@ -245,8 +245,8 @@ static void setLayout3(std::list<CAbstractBody *> &bodies)
 	bodies.push_back(new CPolygon(0, 0, 1024, 10, rgb(150, 75, 0)));
 
 	// Add pipes
-	bodies.push_back(new CPipe(600, 200, 100, 100));
-	bodies.push_back(new CPipe(400, 100, 100, 100));
+	bodies.push_back(new CPipe(700, 400, 100, 100));
+	bodies.push_back(new CPipe(200, 300, 200, 100));
 }
 
 static void cleanup(std::list<CDrop> &drops, std::list<CAbstractBody *> &bodies)

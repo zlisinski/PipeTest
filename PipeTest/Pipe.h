@@ -27,6 +27,6 @@ private:
 	unsigned int frame;
 	std::list<CDrop> drops;
 	
-	virtual b2Body *createBody() const;
+	b2Body *createBody() const;
 };
 

@@ -93,7 +93,10 @@ void CPipe::captureDrops(std::list<CDrop> &drops, unsigned int frame)
 		    ((drop->getY() - drop->getRadius()) >= this->y) &&
 		    ((drop->getY() + drop->getRadius()) < (this->y + this->height))) {
 				// Create copy when adding to list. Place it one pixel outside the box so it doesn't get captured again.
-				dropsToReAdd.push_back(CDrop(this->x-1, this->y + (this->height/2), drop->getRadius(), drop->getColor()));
+				int newX = this->x - 1;
+				int newY = this->y + (this->height / 2);
+				b2Vec2 newVelocity = b2Vec2(-4.0f, 4.0f);
+				dropsToReAdd.push_back(CDrop(newX, newY, drop->getRadius(), newVelocity, drop->getColor()));
 				drops.erase(drop++);
 		}
 		else {

@@ -27,8 +27,6 @@ protected:
 	Uint32 color;
 	b2Body *body;
 
-	virtual b2Body *createBody() const = 0;
-
 	virtual Uint32 randomColor() const;
 };
 

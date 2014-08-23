@@ -21,12 +21,12 @@ protected:
 	int *ys;
 	b2Vec2 *b2Vertices;
 
-	virtual b2Body *createBody() const;
-
 	void calculateXY();
 	void calculateB2Vertices();
 
 private:
 	void constructPolygon(int xs[], int ys[], int vertexCount, Uint32 color);
 	void constructRectangle(int x, int y, int width, int height, Uint32 color);
+
+	b2Body *createBody() const;
 };

@@ -11,29 +11,29 @@ CDrop::CDrop() :
 	this->x = SCREEN_WIDTH - 50 + (rand() % 20);
 	this->y = 668 + (rand() % 20);
 	this->color = this->randomColor();
-	this->body = this->createBody();
+	this->body = this->createBody(b2Vec2(-4.0f, 0.0f));
 }
 
-CDrop::CDrop(int x, int y, int radius) :
+CDrop::CDrop(int x, int y, int radius, const b2Vec2 &velocity) :
 	CAbstractBody(x, y),
 	radius(radius)
 {
 	this->color = this->randomColor();
-	this->body = this->createBody();
+	this->body = this->createBody(velocity);
 }
 
-CDrop::CDrop(int x, int y, int radius, Uint32 color) :
+CDrop::CDrop(int x, int y, int radius, const b2Vec2 &velocity, Uint32 color) :
 	CAbstractBody(x, y, color),
 	radius(radius)
 {
-	this->body = this->createBody();
+	this->body = this->createBody(velocity);
 }
 
 CDrop::CDrop(const CDrop &copy) :
 	CAbstractBody(copy.x, copy.y, copy.color),
 	radius(copy.radius)
 {
-	this->body = copy.createBody();
+	this->body = copy.createBody(copy.getVelocity());
 }
 
 CDrop &CDrop::operator=(const CDrop &copy)
@@ -43,7 +43,7 @@ CDrop &CDrop::operator=(const CDrop &copy)
 		this->x = copy.x;
 		this->y = copy.y;
 		this->color = copy.color;
-		this->body = copy.createBody();
+		this->body = copy.createBody(copy.getVelocity());
 	}
 
 	return *this;
@@ -60,14 +60,14 @@ void CDrop::draw(SDL_Surface *surface, unsigned int frame) const
 	Draw_FillCircle(surface, this->x, newY, this->radius, this->color);
 }
 
-b2Body *CDrop::createBody() const
+b2Body *CDrop::createBody(const b2Vec2 &velocity) const
 {
 	b2Body *newBody;
 
 	b2BodyDef bodyDef;
 	bodyDef.type = b2_dynamicBody;
 	bodyDef.position.Set(pixelToMeter((float)this->x), pixelToMeter((float)this->y));
-	bodyDef.linearVelocity.Set(-4.0f, 0.0f);
+	bodyDef.linearVelocity.Set(velocity.x, velocity.y);
 	
 	newBody = world->CreateBody(&bodyDef);
 
