@@ -5,7 +5,8 @@
 #include "Drop.h"
 
 CDrop::CDrop() :
-	CAbstractBody()
+	CAbstractBody(),
+	captured(false)
 {
 	this->radius = 5 + (rand() % 10);
 	this->x = SCREEN_WIDTH - 50 + (rand() % 20);
@@ -16,7 +17,8 @@ CDrop::CDrop() :
 
 CDrop::CDrop(int x, int y, int radius, const b2Vec2 &velocity) :
 	CAbstractBody(x, y),
-	radius(radius)
+	radius(radius),
+	captured(false)
 {
 	this->color = this->randomColor();
 	this->body = this->createBody(velocity);
@@ -24,16 +26,27 @@ CDrop::CDrop(int x, int y, int radius, const b2Vec2 &velocity) :
 
 CDrop::CDrop(int x, int y, int radius, const b2Vec2 &velocity, Uint32 color) :
 	CAbstractBody(x, y, color),
-	radius(radius)
+	radius(radius),
+	captured(false)
 {
 	this->body = this->createBody(velocity);
 }
 
 CDrop::CDrop(const CDrop &copy) :
 	CAbstractBody(copy.x, copy.y, copy.color),
-	radius(copy.radius)
+	radius(copy.radius),
+	captured(copy.captured)
 {
 	this->body = copy.createBody(copy.getVelocity());
+
+	// I don't remember why createBody is called on the copy and not on this object.
+	// Because of this, we have to set the UserData here, instead of in createBody.
+	b2Fixture *f = this->body->GetFixtureList();
+	while (f != NULL) {
+		f->SetUserData((void*)this);
+		f = f->GetNext();
+	}
+	//this->body->SetUserData((void*)this);
 }
 
 CDrop &CDrop::operator=(const CDrop &copy)
@@ -43,7 +56,17 @@ CDrop &CDrop::operator=(const CDrop &copy)
 		this->x = copy.x;
 		this->y = copy.y;
 		this->color = copy.color;
+		this->captured = copy.captured;
 		this->body = copy.createBody(copy.getVelocity());
+
+		// I don't remember why createBody is called on the copy and not on this object.
+		// Because of this, we have to set the UserData here, instead of in createBody.
+		b2Fixture *f = this->body->GetFixtureList();
+		while (f != NULL) {
+			f->SetUserData((void*)this);
+			f = f->GetNext();
+		}
+		//this->body->SetUserData((void*)this);
 	}
 
 	return *this;
@@ -84,6 +107,9 @@ b2Body *CDrop::createBody(const b2Vec2 &velocity) const
 	fixtureDef.filter.categoryBits = DROP_CATEGORY;
 	fixtureDef.filter.maskBits = DROP_MASK;
 	fixtureDef.filter.groupIndex = 0;
+
+	// Set userData
+	fixtureDef.userData = (void*)this;
 
 	newBody->CreateFixture(&fixtureDef);
 

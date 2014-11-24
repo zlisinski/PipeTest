@@ -7,33 +7,40 @@
 
 #include "main.h"
 #include "Pipe.h"
+#include "Drop.h"
 
 CPipe::CPipe() :
 	CAbstractBody(),
 	width(100),
 	height(100),
 	frame(0),
-	drops()
+	drops(),
+	captureSide(Top),
+	emitSide(Left)
 {
 	this->body = this->createBody();
 }
 
-CPipe::CPipe(int x, int y, int width, int height) :
+CPipe::CPipe(int x, int y, int width, int height, ESide captureSide, ESide emitSide) :
 	CAbstractBody(x, y),
 	width(width),
 	height(height),
 	frame(0),
-	drops()
+	drops(),
+	captureSide(captureSide),
+	emitSide(emitSide)
 {
 	this->body = this->createBody();
 }
 
-CPipe::CPipe(int x, int y, int width, int height, Uint32 color) :
+CPipe::CPipe(int x, int y, int width, int height, ESide captureSide, ESide emitSide, Uint32 color) :
 	CAbstractBody(x, y, color),
 	width(width),
 	height(height),
 	frame(0),
-	drops()
+	drops(),
+	captureSide(captureSide),
+	emitSide(emitSide)
 {
 	this->body = this->createBody();
 }
@@ -43,9 +50,20 @@ CPipe::CPipe(const CPipe &copy) :
 	width(copy.width),
 	height(copy.height),
 	frame(copy.frame),
-	drops(copy.drops)
+	drops(copy.drops),
+	captureSide(copy.captureSide),
+	emitSide(copy.emitSide)
 {
 	this->body = copy.createBody();
+
+	// I don't remember why createBody is called on the copy and not on this object.
+	// Because of this, we have to set the UserData here, instead of in createBody.
+	b2Fixture *f = this->body->GetFixtureList();
+	while (f != NULL) {
+		f->SetUserData((void*)this);
+		f = f->GetNext();
+	}
+	//this->body->SetUserData((void*)this);
 }
 
 CPipe &CPipe::operator=(const CPipe &copy)
@@ -58,8 +76,19 @@ CPipe &CPipe::operator=(const CPipe &copy)
 		this->color = copy.color;
 		this->body = copy.createBody();
 		this->frame = copy.frame;
+		this->captureSide = copy.captureSide;
+		this->emitSide = copy.emitSide;
 		this->drops = copy.drops; // Probably has some problems
 		throw new std::exception(); // Throw to let me know if the code ever reaches here
+
+		// I don't remember why createBody is called on the copy and not on this object.
+		// Because of this, we have to set the UserData here, instead of in createBody.
+		b2Fixture *f = this->body->GetFixtureList();
+		while (f != NULL) {
+			f->SetUserData((void*)this);
+			f = f->GetNext();
+		}
+		//this->body->SetUserData((void*)this);
 	}
 
 	return *this;
@@ -76,37 +105,99 @@ void CPipe::draw(SDL_Surface *surface, unsigned int frame) const
 	Draw_FillRect(surface, x, newY-height, width, height, color);
 }
 
-void CPipe::captureDrop(CDrop &drop, unsigned int frame)
+// Checks if a drop can collide with this pipe based on the captureSide member. A drop will collide with
+// all sides except for the the captureSide. Using the top side as an example, If the drop is within the
+// bounds of the left and right side and its bottom is above the bottom of the pipe, it is considered as
+// having come from the top, and will not collide. This obviously has some flaws in the event that it
+// completely passes a side in one time step.
+bool CPipe::allowCollision(CDrop &drop)
 {
+	int dropMinX = drop.getMinX();
+	int dropMaxX = drop.getMaxX();
+	int dropMinY = drop.getMinY();
+	int dropMaxY = drop.getMaxY();
+	int pipeMinX = this->getMinX();
+	int pipeMaxX = this->getMaxX();
+	int pipeMinY = this->getMinY();
+	int pipeMaxY = this->getMaxY();
 
+	switch (this->captureSide) {
+		case Top:
+			if ((dropMinX >= pipeMinX) &&
+			    (dropMaxX < pipeMaxX) &&
+			    (dropMinY >= pipeMinY))
+					return false;
+			break;
+		case Right:
+			if ((dropMinX >= pipeMinX) &&
+			    (dropMinY >= pipeMinY) &&
+			    (dropMaxY < pipeMaxY))
+					return false;
+			break;
+		case Bottom:
+			if ((dropMinX >= dropMinX) &&
+			    (dropMaxX < dropMaxX) &&
+			    (dropMaxY < pipeMaxY))
+					return false;
+			break;
+		case Left:
+			if ((dropMaxX < pipeMaxX) &&
+			    (dropMinY >= pipeMinY) &&
+			    (dropMaxY < pipeMaxY))
+					return false;
+			break;
+	}
+
+	return true;
 }
 
-// For now, this immediately emits the drops it captures. Eventually it will hold them for a few frames to simulate moving through the pipe.
-void CPipe::captureDrops(std::list<CDrop> &drops, unsigned int frame)
+// If the drop is completely within the pipe, it is considered "Captured". This means it gets added to 
+// an internal list and will be removed from the global drops list in main.cpp. Eventually we will use
+// the frame count to hold the drop for a few frames to simulate travel time inside the pipe.
+bool CPipe::captureDrop(CDrop &drop, unsigned int frame)
 {
-	std::list<CDrop> dropsToReAdd;
-
-	std::list<CDrop>::iterator drop = drops.begin();
-	while (drop != drops.end()) {
-		if (((drop->getX() - drop->getRadius()) >= this->x) &&
-		    ((drop->getX() + drop->getRadius()) < (this->x + this->width)) &&
-		    ((drop->getY() - drop->getRadius()) >= this->y) &&
-		    ((drop->getY() + drop->getRadius()) < (this->y + this->height))) {
-				// Create copy when adding to list. Place it one pixel outside the box so it doesn't get captured again.
-				int newX = this->x - 1;
-				int newY = this->y + (this->height / 2);
-				b2Vec2 newVelocity = b2Vec2(-4.0f, 4.0f);
-				dropsToReAdd.push_back(CDrop(newX, newY, drop->getRadius(), newVelocity, drop->getColor()));
-				drops.erase(drop++);
-		}
-		else {
-			++drop;
-		}
+	if (drop.getMinX() >= this->getMinX() &&
+	    drop.getMaxX() < this->getMaxX() &&
+	    drop.getMinY() >= this->getMinY() &&
+	    drop.getMaxY() < this->getMaxY()) {
+			// Set drop as captured so we can remove it from the main list of drops in main.cpp
+			drop.setCaptured(true);
+			this->drops.push_back(&drop);
+			return true;
 	}
 
-	for (std::list<CDrop>::iterator drop = dropsToReAdd.begin(); drop != dropsToReAdd.end(); ++drop) {
-		drops.push_back(*drop);
+	return false;
+}
+
+// Returns a list of drops to emit from the pipe. These are drops that were previously captured.
+// Eventually we will use the frame count to hold the drop for a few frames to simulate travel time
+// inside the pipe.
+// Right now it only emits on left side.
+std::list<CDrop *> CPipe::emitDrops(unsigned int frame)
+{
+	std::list<CDrop *> dropsToEmit;
+
+	std::list<CDrop *>::iterator ppDrop = drops.begin();
+	while (ppDrop != drops.end()) {
+		CDrop *pDrop = *ppDrop;
+
+		//if (frame) {
+			// Place drop one pixel outside the pipe so it doesn't get captured again.
+			int newX = (this->x - 1) + (pDrop->getRadius() / 2);
+			int newY = this->y + (this->height / 2);
+			b2Vec2 newPos = b2Vec2(pixelToMeter(newX), pixelToMeter(newY));
+			b2Vec2 newVelocity = b2Vec2(-4.0f, 4.0f);
+
+			pDrop->getBody()->SetTransform(newPos, 0);
+			pDrop->getBody()->SetLinearVelocity(newVelocity);
+			pDrop->update();
+			pDrop->setCaptured(false);
+			dropsToEmit.push_back(pDrop);
+			drops.erase(ppDrop++);
+		//}
 	}
+
+	return dropsToEmit;
 }
 
 b2Body *CPipe::createBody() const
@@ -143,7 +234,11 @@ b2Body *CPipe::createBody() const
 	fixtureDef.filter.maskBits = PIPE_MASK;
 	fixtureDef.filter.groupIndex = 0;
 
+	// Set userData
+	fixtureDef.userData = (void*)this;
+
 	newBody->CreateFixture(&fixtureDef);
+	//newBody->SetUserData((void*)this);
 
 	return newBody;
 }

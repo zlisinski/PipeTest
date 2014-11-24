@@ -13,23 +13,23 @@
 #include "Drop.h"
 #include "Polygon.h"
 #include "Pipe.h"
+#include "ContactListener.h"
 
 // SetLayoutFunc is a function pointer to a setLayout*() function
 typedef void (*SetLayoutFunc) (std::list<CAbstractBody *> &bodies);
 
-static void drawScreen(SDL_Surface *screen, std::list<CDrop> &drops, std::list<CAbstractBody *> &bodies);
+static void drawScreen(SDL_Surface *screen, std::list<CDrop *> &drops, std::list<CAbstractBody *> &bodies);
 static void drawGrid(SDL_Surface *screen);
 static void setLayout1(std::list<CAbstractBody *> &bodies);
 static void setLayout2(std::list<CAbstractBody *> &bodies);
 static void setLayout3(std::list<CAbstractBody *> &bodies);
-static void cleanup(std::list<CDrop> &drops, std::list<CAbstractBody *> &bodies);
+static void setLayout4(std::list<CAbstractBody *> &bodies);
+static void cleanup(std::list<CDrop *> &drops, std::list<CAbstractBody *> &bodies);
 
 // Globals for convenience, so they don't have to be passed in to every function
 SDL_Surface *screen = NULL;
 b2World *world = NULL;
 bool gridVisible = true;
-
-const int LAYOUT_COUNT = 3;
 
 int main(int argc, char* args[])
 {
@@ -37,11 +37,13 @@ int main(int argc, char* args[])
 	SDL_Event event;
 	int frame = 0;
 	CTimer fps;
-	std::list<CDrop> drops;
+	std::list<CDrop *> drops;
 	std::list<CAbstractBody *> bodies; // I know pointers aren't the best here, I'll change it later
 	std::list<CPipe> pipes;
 	int curLayout = 2;
-	SetLayoutFunc layoutFuncs[LAYOUT_COUNT] = {setLayout1, setLayout2, setLayout3};
+	SetLayoutFunc layoutFuncs[] = {setLayout1, setLayout2, setLayout3, setLayout4};
+	const int LAYOUT_COUNT = sizeof(layoutFuncs) / sizeof(layoutFuncs[0]);
+	CContactListener contactListener;
 
 	srand((unsigned int)time(NULL));
 
@@ -63,6 +65,7 @@ int main(int argc, char* args[])
 	b2Vec2 gravity;
 	gravity.Set(0.0f, -10.0f);
 	world = new b2World(gravity);
+	world->SetContactListener(&contactListener);
 
 	// Setup the walls and polygons
 	layoutFuncs[curLayout](bodies);
@@ -120,7 +123,7 @@ int main(int argc, char* args[])
 	return 0;
 }
 
-static void drawScreen(SDL_Surface *screen, std::list<CDrop> &drops, std::list<CAbstractBody *> &bodies)
+static void drawScreen(SDL_Surface *screen, std::list<CDrop *> &drops, std::list<CAbstractBody *> &bodies)
 {
 	static unsigned int frame = 0;
 
@@ -128,7 +131,7 @@ static void drawScreen(SDL_Surface *screen, std::list<CDrop> &drops, std::list<C
 		if (SDL_LockSurface(screen) < 0)
 			return;
 	}
-	
+
 	// Clear screen each frame
 	SDL_FillRect(screen, NULL, 0);
 
@@ -136,36 +139,48 @@ static void drawScreen(SDL_Surface *screen, std::list<CDrop> &drops, std::list<C
 	if (gridVisible)
 		drawGrid(screen);
 
-	// Add a new drop to the end each frame. Creating a drop and immediately making a copy in the list probably isn't the best solution.
-	drops.push_back(CDrop());
+	// Add a new drop each frame.
+	drops.push_back(new CDrop());
 
-	std::list<CDrop>::iterator drop = drops.begin();
-	while (drop != drops.end()) {
+	std::list<CDrop *>::iterator ppDrop = drops.begin();
+	while (ppDrop != drops.end()) {
+		CDrop *pDrop = *ppDrop;
+
+		// Remove captured drops
+		if (pDrop->getCaptured()) {
+			drops.erase(ppDrop++);
+			continue;
+		}
+
 		// Move drop
-		drop->update();
+		pDrop->update();
 
-		if (((drop->getX() - drop->getRadius()) > 0) &&
-		    ((drop->getX() + drop->getRadius()) < SCREEN_WIDTH) &&
-		    ((drop->getY() - drop->getRadius()) > 0) &&
-		    ((drop->getY() + drop->getRadius()) < SCREEN_HEIGHT)) {
+		if ((pDrop->getMinX() > 0) &&
+		    (pDrop->getMaxX() < SCREEN_WIDTH) &&
+		    (pDrop->getMinY() > 0) &&
+		    (pDrop->getMaxY() < SCREEN_HEIGHT)) {
 				// Draw drop if it is still on the screen
-				drop->draw(screen, frame);
-				++drop;
+				pDrop->draw(screen, frame);
+				++ppDrop;
 		}
 		else {
 			// Remove it if it hits the edge
-			drops.erase(drop++);
+			drops.erase(ppDrop++);
+			delete pDrop;
 		}
 	}
 
 	// Draw bodies
-	for (std::list<CAbstractBody *>::iterator body = bodies.begin(); body != bodies.end(); ++body) {
-		(*body)->draw(screen, frame);
+	for (std::list<CAbstractBody *>::iterator pBody = bodies.begin(); pBody != bodies.end(); ++pBody) {
+		(*pBody)->draw(screen, frame);
 
-		// If the body is a pipe, check if any drop can be captured by it
-		CPipe *pipe = dynamic_cast<CPipe *>(*body);
+		// If the body is a pipe, check if there are any drops to be emitted
+		CPipe *pipe = dynamic_cast<CPipe *>(*pBody);
 		if (pipe != NULL) {
-			pipe->captureDrops(drops, frame);
+			std::list<CDrop *> newDrops = pipe->emitDrops(frame);
+			if (!newDrops.empty()) {
+				drops.splice(drops.end(), newDrops);
+			}
 		}
 	}
 
@@ -245,12 +260,25 @@ static void setLayout3(std::list<CAbstractBody *> &bodies)
 	bodies.push_back(new CPolygon(0, 0, 1024, 10, rgb(150, 75, 0)));
 
 	// Add pipes
-	bodies.push_back(new CPipe(700, 400, 100, 100));
-	bodies.push_back(new CPipe(200, 300, 200, 100));
+	bodies.push_back(new CPipe(700, 400, 100, 100, CPipe::Top, CPipe::Left));
+	bodies.push_back(new CPipe(200, 300, 200, 100, CPipe::Top, CPipe::Left));
 }
 
-static void cleanup(std::list<CDrop> &drops, std::list<CAbstractBody *> &bodies)
+static void setLayout4(std::list<CAbstractBody *> &bodies)
 {
+	// Add bodies
+	bodies.push_back(new CPolygon(0, 0, 1024, 10, rgb(150, 75, 0)));
+
+	// Add pipes
+	bodies.push_back(new CPipe(700, 400, 100, 100, CPipe::Top, CPipe::Left));
+	bodies.push_back(new CPipe(400, 500, 100, 100, CPipe::Right, CPipe::Left));
+}
+
+static void cleanup(std::list<CDrop *> &drops, std::list<CAbstractBody *> &bodies)
+{
+	for (std::list<CDrop *>::iterator drop = drops.begin(); drop != drops.end(); ++drop) {
+		delete *drop;
+	}
 	drops.clear();
 
 	for (std::list<CAbstractBody *>::iterator body = bodies.begin(); body != bodies.end(); ++body) {

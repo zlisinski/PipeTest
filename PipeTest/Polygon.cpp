@@ -192,7 +192,11 @@ b2Body *CPolygon::createBody() const
 	fixtureDef.filter.maskBits = WALL_MASK;
 	fixtureDef.filter.groupIndex = 0;
 
+	// Set userData
+	fixtureDef.userData = (void*)this;
+	
 	newBody->CreateFixture(&fixtureDef);
+	//newBody->SetUserData((void*)this);
 
 	return newBody;
 }

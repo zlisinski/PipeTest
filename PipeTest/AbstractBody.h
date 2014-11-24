@@ -21,6 +21,8 @@ public:
 	int getY() const {return y;}
 	Uint32 getColor() const {return color;}
 
+	b2Body *getBody() {return this->body;}
+
 protected:
 	int x;
 	int y;
