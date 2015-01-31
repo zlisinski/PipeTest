@@ -37,10 +37,10 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>C:\SDL-1.2.15\include;C:\SDL_draw-1.2.13\include;C:\Box2D_v2.3.0\Box2D;C:\SDL_gfx-2.0.25;$(IncludePath)</IncludePath>
+    <IncludePath>\SDL-1.2.15\include;\SDL_draw-1.2.13\include;\Box2D_v2.3.0\Box2D;\SDL_gfx-2.0.25;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LibraryPath>C:\SDL-1.2.15\lib\x86;C:\SDL_draw-1.2.13\VC2008EE;C:\Box2D_v2.3.0\Box2D\Build\vs2012\bin\Debug;C:\SDL_gfx-2.0.25\Debug;$(LibraryPath)</LibraryPath>
+    <LibraryPath>\SDL-1.2.15\lib\x86;\SDL_draw-1.2.13\VC2008EE;\Box2D_v2.3.0\Box2D\Build\vs2012\bin\Debug;\SDL_gfx-2.0.25\Debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
