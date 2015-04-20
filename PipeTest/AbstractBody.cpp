@@ -54,6 +54,9 @@ void CAbstractBody::move(Uint32 x, Uint32 y)
 {
 	this->x = x;
 	this->y = y;
+
+	b2Vec2 newPos = b2Vec2(pixelToMeter(x), pixelToMeter(y));
+	this->body->SetTransform(newPos, 0);
 }
 
 void CAbstractBody::update()

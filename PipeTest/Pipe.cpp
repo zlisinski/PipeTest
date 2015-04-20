@@ -185,12 +185,12 @@ std::list<CDrop *> CPipe::emitDrops(unsigned int frame)
 			// Place drop one pixel outside the pipe so it doesn't get captured again.
 			int newX = (this->x - 1) + (pDrop->getRadius() / 2);
 			int newY = this->y + (this->height / 2);
-			b2Vec2 newPos = b2Vec2(pixelToMeter(newX), pixelToMeter(newY));
+
 			b2Vec2 newVelocity = b2Vec2(-4.0f, 4.0f);
 
-			pDrop->getBody()->SetTransform(newPos, 0);
+			pDrop->move(newX, newY);
 			pDrop->getBody()->SetLinearVelocity(newVelocity);
-			pDrop->update();
+
 			pDrop->setCaptured(false);
 			dropsToEmit.push_back(pDrop);
 			drops.erase(ppDrop++);
