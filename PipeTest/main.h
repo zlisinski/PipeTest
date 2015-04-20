@@ -43,7 +43,7 @@ inline int meterToPixel(float meter)
 //          flipYAxis(379) = 100;
 inline int flipYAxis(int y)
 {
-	return (-1 * y) + (SCREEN_HEIGHT - 1);
+	return (SCREEN_HEIGHT - 1) - y;
 }
 
 inline Uint32 rgb(Uint8 r, Uint8 g, Uint8 b)
