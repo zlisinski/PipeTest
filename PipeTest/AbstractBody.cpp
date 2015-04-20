@@ -66,6 +66,23 @@ void CAbstractBody::update()
 	this->y = meterToPixel(pos.y);
 }
 
+bool CAbstractBody::testPoint(Uint32 x, Uint32 y)
+{
+	if (this->body == NULL)
+		return false;
+
+	b2Vec2 point = b2Vec2(pixelToMeter((float)x), pixelToMeter((float)y));
+
+	b2Fixture *fixture = this->body->GetFixtureList();
+	while (fixture != NULL) {
+		if (fixture->TestPoint(point))
+			return true;
+		fixture = fixture->GetNext();
+	}
+
+	return false;
+}
+
 Uint32 CAbstractBody::randomColor() const {
 	const Uint8 min = 64;
 

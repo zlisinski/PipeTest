@@ -37,7 +37,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>\SDL-1.2.15\include;\SDL_draw-1.2.13\include;\Box2D_v2.3.0\Box2D;\SDL_gfx-2.0.25;$(IncludePath)</IncludePath>
+    <IncludePath>D:\SDL-1.2.15\include;D:\SDL_draw-1.2.13\include;D:\Box2D_v2.3.0\Box2D;D:\SDL_gfx-2.0.25;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LibraryPath>\SDL-1.2.15\lib\x86;\SDL_draw-1.2.13\VC2008EE;\Box2D_v2.3.0\Box2D\Build\vs2012\bin\Debug;\SDL_gfx-2.0.25\Debug;$(LibraryPath)</LibraryPath>
@@ -72,6 +72,7 @@
     <ClCompile Include="Drop.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Pipe.cpp" />
+    <ClCompile Include="PointQueryCallback.cpp" />
     <ClCompile Include="Polygon.cpp" />
     <ClCompile Include="Timer.cpp" />
   </ItemGroup>
@@ -81,6 +82,7 @@
     <ClInclude Include="Drop.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="Pipe.h" />
+    <ClInclude Include="PointQueryCallback.h" />
     <ClInclude Include="Polygon.h" />
     <ClInclude Include="Timer.h" />
   </ItemGroup>

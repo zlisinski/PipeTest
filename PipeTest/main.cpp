@@ -14,12 +14,14 @@
 #include "Polygon.h"
 #include "Pipe.h"
 #include "ContactListener.h"
+#include "PointQueryCallback.h"
 
 // SetLayoutFunc is a function pointer to a setLayout*() function
 typedef void (*SetLayoutFunc) (std::list<CAbstractBody *> &bodies);
 
 static void drawScreen(SDL_Surface *screen, std::list<CDrop *> &drops, std::list<CAbstractBody *> &bodies);
 static void drawGrid(SDL_Surface *screen);
+static CAbstractBody *getBodyAtPoint(Uint32 x, Uint32 y);
 static void setLayout1(std::list<CAbstractBody *> &bodies);
 static void setLayout2(std::list<CAbstractBody *> &bodies);
 static void setLayout3(std::list<CAbstractBody *> &bodies);
@@ -44,6 +46,12 @@ int main(int argc, char* args[])
 	SetLayoutFunc layoutFuncs[] = {setLayout1, setLayout2, setLayout3, setLayout4};
 	const int LAYOUT_COUNT = sizeof(layoutFuncs) / sizeof(layoutFuncs[0]);
 	CContactListener contactListener;
+	int mouseX = 0;
+	int mouseY = 0;
+	bool mouseDownL = false;
+	bool mouseDownR = false;
+	CAbstractBody *draggingBody;
+	b2Vec2 draggingDiff;
 
 	srand((unsigned int)time(NULL));
 
@@ -74,11 +82,8 @@ int main(int argc, char* args[])
 	while (running) {
 		fps.start();
 
-		char title[256];
-		sprintf_s(title, "Pipe Test - Press 'z' to change layout, Press 'x' to toggle grid. Drop count = %d", drops.size());
-		SDL_WM_SetCaption(title, NULL);
-
-		world->Step(TIME_STEP, VELOCITY_ITER, POSITION_ITER);
+		if (!mouseDownL && !mouseDownR)
+			world->Step(TIME_STEP, VELOCITY_ITER, POSITION_ITER);
 
 		drawScreen(screen, drops, bodies);
 
@@ -106,7 +111,47 @@ int main(int argc, char* args[])
 					layoutFuncs[curLayout](bodies);
 				}
 			}
+			else if (event.type == SDL_MOUSEMOTION) {
+				mouseX = event.motion.x;
+				mouseY = flipYAxis(event.motion.y);
+			}
+			else if (event.type == SDL_MOUSEBUTTONDOWN) {
+				if (event.button.button == SDL_BUTTON_LEFT) {
+					mouseDownL = true;
+					draggingBody = getBodyAtPoint(mouseX, mouseY);
+					if (draggingBody == NULL) {
+						debugPrint("Click=NULL");
+					}
+					else {
+						debugPrint("Click=%d,%d", draggingBody->getX(), draggingBody->getY());
+						b2Vec2 point(pixelToMeter((float)mouseX), pixelToMeter((float)mouseY));
+						b2Vec2 bodyPoint(pixelToMeter((float)draggingBody->getX()), pixelToMeter((float)draggingBody->getY()));
+						draggingDiff = bodyPoint - point;
+					}
+				}
+				else if (event.button.button == SDL_BUTTON_RIGHT) {
+					mouseDownR = true;
+				}
+			}
+			else if (event.type == SDL_MOUSEBUTTONUP) {
+				if (event.button.button == SDL_BUTTON_LEFT) {
+					mouseDownL = false;
+					if (draggingBody != NULL) {
+						b2Vec2 point(pixelToMeter((float)mouseX), pixelToMeter((float)mouseY));
+						b2Vec2 newPos = point + draggingDiff;
+						draggingBody->move(meterToPixel((float)newPos.x), meterToPixel((float)newPos.y));
+					}
+				}
+				else if (event.button.button == SDL_BUTTON_RIGHT) {
+					mouseDownR = false;
+				}
+			}
 		}
+
+		char title[256];
+		sprintf_s(title, "Pipe Test - Press 'z' to change layout, Press 'x' to toggle grid. Drop count = %d. Mouse=%d,%d,%s%s",
+		          drops.size(), mouseX, mouseY, mouseDownL ? "L" : "", mouseDownR ? "R" : "");
+		SDL_WM_SetCaption(title, NULL);
 
 		// Lock the frame rate
 		if (fps.get_ticks() < 1000 / FRAME_RATE) {
@@ -221,6 +266,27 @@ static void drawGrid(SDL_Surface *screen)
 
 		Draw_HLine(screen, 0, newY, SCREEN_WIDTH - 1, color);
 	}
+}
+
+static CAbstractBody *getBodyAtPoint(Uint32 x, Uint32 y)
+{
+	b2Vec2 point = b2Vec2(pixelToMeter((float)x), pixelToMeter((float)y));
+	b2AABB aabb;
+	aabb.lowerBound = aabb.upperBound = point;
+
+	CPointQueryCallback callback;
+
+	world->QueryAABB(&callback, aabb);
+
+	for (std::list<CAbstractBody *>::iterator pBody = callback.bodies.begin(); pBody != callback.bodies.end(); ++pBody) {
+		// According to a stackoverflow post, QueryAABB can return bodies whose AABB contains the point, not just 
+		// actual fixtures containing the point. That doesn't seem to be the case, but check with the body anyway.
+		if ((*pBody)->testPoint(x, y)) {
+			return *pBody;
+		}
+	}
+
+	return NULL;
 }
 
 static void setLayout1(std::list<CAbstractBody *> &bodies)
