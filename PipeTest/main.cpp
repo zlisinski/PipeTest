@@ -82,8 +82,7 @@ int main(int argc, char* args[])
 	while (running) {
 		fps.start();
 
-		if (!mouseDownL && !mouseDownR)
-			world->Step(TIME_STEP, VELOCITY_ITER, POSITION_ITER);
+		world->Step(TIME_STEP, VELOCITY_ITER, POSITION_ITER);
 
 		drawScreen(screen, drops, bodies);
 
