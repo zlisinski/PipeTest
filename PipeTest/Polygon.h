@@ -13,6 +13,7 @@ public:
 	CPolygon &operator=(const CPolygon &copy);
 	virtual ~CPolygon();
 
+	virtual void move(Uint32 x, Uint32 y);
 	virtual void draw(SDL_Surface *surface, unsigned int frame) const;
 
 protected:

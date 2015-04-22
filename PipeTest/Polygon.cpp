@@ -149,6 +149,23 @@ CPolygon::~CPolygon()
 	delete [] this->b2Vertices;
 }
 
+void CPolygon::move(Uint32 x, Uint32 y)
+{
+	Uint32 diffX = x - this->x;
+	Uint32 diffY = y - this->y;
+
+	this->x = x;
+	this->y = y;
+
+	for (int i = 0; i < this->vertexCount; i++) {
+		this->xs[i] += diffX;
+		this->ys[i] += diffY;
+	}
+
+	b2Vec2 newPos = b2Vec2(pixelToMeter(x), pixelToMeter(y));
+	this->body->SetTransform(newPos, 0);
+}
+
 void CPolygon::draw(SDL_Surface *surface, unsigned int frame) const
 {
 	// Flip Y axis because SDL is Y-down while the rest of the code is Y-up. Also convert Sint32 to Sint16.
