@@ -9,8 +9,8 @@ CDrop::CDrop() :
 	captured(false)
 {
 	this->radius = 5 + (rand() % 10);
-	this->x = SCREEN_WIDTH - 50 + (rand() % 20);
-	this->y = 668 + (rand() % 20);
+	this->x = SCREEN_WIDTH - 50 + (rand() % randPos);
+	this->y = 668 + (rand() % randPos);
 	this->color = this->randomColor();
 	this->body = this->createBody(b2Vec2(-4.0f, 0.0f));
 }

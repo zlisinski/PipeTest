@@ -24,6 +24,8 @@ public:
 	bool getCaptured() {return this->captured;}
 	void setCaptured(bool val) {this->captured = val;}
 
+	static const int randPos = 20;
+
 private:
 	int radius;
 	bool captured;

@@ -191,6 +191,8 @@ static void drawScreen(SDL_Surface *screen, std::list<CDrop *> &drops, std::list
 
 	// Add a new drop each frame.
 	drops.push_back(new CDrop());
+	drops.push_back(new CDrop());
+	drops.push_back(new CDrop());
 
 	std::list<CDrop *>::iterator ppDrop = drops.begin();
 	while (ppDrop != drops.end()) {

@@ -183,8 +183,8 @@ std::list<CDrop *> CPipe::emitDrops(unsigned int frame)
 
 		//if (frame) {
 			// Place drop one pixel outside the pipe so it doesn't get captured again.
-			int newX = (this->x - 1) + (pDrop->getRadius() / 2);
-			int newY = this->y + (this->height / 2);
+			int newX = (this->x - 1) + (pDrop->getRadius() / 2) + (rand() % CDrop::randPos);
+			int newY = this->y + (this->height / 2) + (rand() % CDrop::randPos);
 
 			b2Vec2 newVelocity = b2Vec2(-4.0f, 4.0f);
 
