@@ -205,7 +205,7 @@ b2Body *CPipe::createBody() const
 	b2Body *newBody;
 
 	b2BodyDef bodyDef;
-	bodyDef.position.Set(pixelToMeter((float)this->x), pixelToMeter((float)this->y));
+	bodyDef.position.Set(pixelToMeter(this->x), pixelToMeter(this->y));
 
 	newBody = world->CreateBody(&bodyDef);
 
@@ -214,11 +214,11 @@ b2Body *CPipe::createBody() const
 	b2Vec2 *b2Vertices = new b2Vec2[4];
 
 	// The first vertex is (this->x, this->y)
-	b2Vec2 origin = b2Vec2(pixelToMeter((float)this->x), pixelToMeter((float)this->y));
+	b2Vec2 origin = b2Vec2FromPixel(this->x, this->y);
 
 	// Subtract the origin vertex from each vertext
 	for (int i = 0; i < 4; i++) {
-		b2Vec2 vec = b2Vec2(pixelToMeter((float)xs[i]), pixelToMeter((float)ys[i]));
+		b2Vec2 vec = b2Vec2FromPixel(xs[i], ys[i]);
 		b2Vertices[i] = vec - origin;
 	}
 

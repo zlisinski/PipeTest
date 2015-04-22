@@ -89,13 +89,13 @@ b2Body *CDrop::createBody(const b2Vec2 &velocity) const
 
 	b2BodyDef bodyDef;
 	bodyDef.type = b2_dynamicBody;
-	bodyDef.position.Set(pixelToMeter((float)this->x), pixelToMeter((float)this->y));
+	bodyDef.position.Set(pixelToMeter(this->x), pixelToMeter(this->y));
 	bodyDef.linearVelocity.Set(velocity.x, velocity.y);
 	
 	newBody = world->CreateBody(&bodyDef);
 
 	b2CircleShape shape;
-	shape.m_radius = pixelToMeter((float)this->radius);
+	shape.m_radius = pixelToMeter(this->radius);
 
 	b2FixtureDef fixtureDef;
 	fixtureDef.shape = &shape;

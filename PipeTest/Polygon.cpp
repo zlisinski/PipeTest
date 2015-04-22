@@ -195,7 +195,7 @@ b2Body *CPolygon::createBody() const
 	b2Body *newBody;
 
 	b2BodyDef bodyDef;
-	bodyDef.position.Set(pixelToMeter((float)this->x), pixelToMeter((float)this->y));
+	bodyDef.position.Set(pixelToMeter(this->x), pixelToMeter(this->y));
 	
 	newBody = world->CreateBody(&bodyDef);
 
@@ -249,11 +249,11 @@ void CPolygon::calculateB2Vertices()
 	this->b2Vertices = new b2Vec2[this->vertexCount];
 
 	// The first vertex is (this->x, this->y)
-	b2Vec2 origin = b2Vec2(pixelToMeter((float)this->x), pixelToMeter((float)this->y));
+	b2Vec2 origin = b2Vec2FromPixel(this->x, this->y);
 
 	// Subtract the origin vertex from each vertext
 	for (int i = 0; i < this->vertexCount; i++) {
-		b2Vec2 vec = b2Vec2(pixelToMeter((float)this->xs[i]), pixelToMeter((float)this->ys[i]));
+		b2Vec2 vec = b2Vec2FromPixel(this->xs[i], this->ys[i]);
 		this->b2Vertices[i] = vec - origin;
 	}
 }

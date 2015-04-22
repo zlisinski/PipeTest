@@ -114,9 +114,9 @@ int main(int argc, char* args[])
 				mouseX = event.motion.x;
 				mouseY = flipYAxis(event.motion.y);
 				if (draggingBody != NULL) {
-					b2Vec2 point(pixelToMeter((float)mouseX), pixelToMeter((float)mouseY));
+					b2Vec2 point = b2Vec2FromPixel(mouseX, mouseY);
 					b2Vec2 newPos = point + draggingDiff;
-					draggingBody->move(meterToPixel((float)newPos.x), meterToPixel((float)newPos.y));
+					draggingBody->move(meterToPixel(newPos.x), meterToPixel(newPos.y));
 				}
 			}
 			else if (event.type == SDL_MOUSEBUTTONDOWN) {
@@ -128,8 +128,8 @@ int main(int argc, char* args[])
 					}
 					else {
 						debugPrint("Click=%d,%d", draggingBody->getX(), draggingBody->getY());
-						b2Vec2 point(pixelToMeter((float)mouseX), pixelToMeter((float)mouseY));
-						b2Vec2 bodyPoint(pixelToMeter((float)draggingBody->getX()), pixelToMeter((float)draggingBody->getY()));
+						b2Vec2 point = b2Vec2FromPixel(mouseX, mouseY);
+						b2Vec2 bodyPoint = b2Vec2FromPixel(draggingBody->getX(), draggingBody->getY());
 						draggingDiff = bodyPoint - point;
 					}
 				}
@@ -141,9 +141,9 @@ int main(int argc, char* args[])
 				if (event.button.button == SDL_BUTTON_LEFT) {
 					mouseDownL = false;
 					if (draggingBody != NULL) {
-						b2Vec2 point(pixelToMeter((float)mouseX), pixelToMeter((float)mouseY));
+						b2Vec2 point = b2Vec2FromPixel(mouseX, mouseY);
 						b2Vec2 newPos = point + draggingDiff;
-						draggingBody->move(meterToPixel((float)newPos.x), meterToPixel((float)newPos.y));
+						draggingBody->move(meterToPixel(newPos.x), meterToPixel(newPos.y));
 						draggingBody = NULL;
 					}
 				}
@@ -275,7 +275,7 @@ static void drawGrid(SDL_Surface *screen)
 
 static CAbstractBody *getBodyAtPoint(Uint32 x, Uint32 y)
 {
-	b2Vec2 point = b2Vec2(pixelToMeter((float)x), pixelToMeter((float)y));
+	b2Vec2 point = b2Vec2FromPixel(x, y);
 	b2AABB aabb;
 	aabb.lowerBound = aabb.upperBound = point;
 

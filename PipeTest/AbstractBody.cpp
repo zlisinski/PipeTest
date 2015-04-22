@@ -55,7 +55,7 @@ void CAbstractBody::move(Uint32 x, Uint32 y)
 	this->x = x;
 	this->y = y;
 
-	b2Vec2 newPos = b2Vec2(pixelToMeter(x), pixelToMeter(y));
+	b2Vec2 newPos = b2Vec2FromPixel(x, y);
 	this->body->SetTransform(newPos, 0);
 }
 
@@ -71,7 +71,7 @@ bool CAbstractBody::testPoint(Uint32 x, Uint32 y)
 	if (this->body == NULL)
 		return false;
 
-	b2Vec2 point = b2Vec2(pixelToMeter((float)x), pixelToMeter((float)y));
+	b2Vec2 point = b2Vec2FromPixel(x, y);
 
 	b2Fixture *fixture = this->body->GetFixtureList();
 	while (fixture != NULL) {

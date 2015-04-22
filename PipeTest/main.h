@@ -3,9 +3,7 @@
 #include <cmath>
 
 #include <SDL.h>
-
-struct SDL_Surface;
-class b2World;
+#include <Box2D/Box2D.h>
 
 extern SDL_Surface *screen;
 extern b2World *world;
@@ -27,7 +25,7 @@ const unsigned short WALL_MASK = 0xFFFF; // Walls collide with everything
 const unsigned short PIPE_MASK = 0xFFFF; // Pipes collide with everything
 
 // 1px == 1cm
-inline float pixelToMeter(float pixel)
+inline float pixelToMeter(Uint32 pixel)
 {
 	return pixel * 0.01f;
 }
@@ -49,6 +47,12 @@ inline int flipYAxis(int y)
 inline Uint32 rgb(Uint8 r, Uint8 g, Uint8 b)
 {
 	return SDL_MapRGB(screen->format, r, g, b);
+}
+
+// Hopefully RVO is in effect... I haven't tested this, but I'm not worried about performance just yet.
+inline b2Vec2 b2Vec2FromPixel(Uint32 x, Uint32 y)
+{
+	return b2Vec2(pixelToMeter(x), pixelToMeter(y));
 }
 
 void debugPrint(char *format, ...);
