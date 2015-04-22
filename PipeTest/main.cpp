@@ -50,7 +50,7 @@ int main(int argc, char* args[])
 	int mouseY = 0;
 	bool mouseDownL = false;
 	bool mouseDownR = false;
-	CAbstractBody *draggingBody;
+	CAbstractBody *draggingBody = NULL;
 	b2Vec2 draggingDiff;
 
 	srand((unsigned int)time(NULL));
@@ -114,6 +114,11 @@ int main(int argc, char* args[])
 			else if (event.type == SDL_MOUSEMOTION) {
 				mouseX = event.motion.x;
 				mouseY = flipYAxis(event.motion.y);
+				if (draggingBody != NULL) {
+					b2Vec2 point(pixelToMeter((float)mouseX), pixelToMeter((float)mouseY));
+					b2Vec2 newPos = point + draggingDiff;
+					draggingBody->move(meterToPixel((float)newPos.x), meterToPixel((float)newPos.y));
+				}
 			}
 			else if (event.type == SDL_MOUSEBUTTONDOWN) {
 				if (event.button.button == SDL_BUTTON_LEFT) {
@@ -140,6 +145,7 @@ int main(int argc, char* args[])
 						b2Vec2 point(pixelToMeter((float)mouseX), pixelToMeter((float)mouseY));
 						b2Vec2 newPos = point + draggingDiff;
 						draggingBody->move(meterToPixel((float)newPos.x), meterToPixel((float)newPos.y));
+						draggingBody = NULL;
 					}
 				}
 				else if (event.button.button == SDL_BUTTON_RIGHT) {
