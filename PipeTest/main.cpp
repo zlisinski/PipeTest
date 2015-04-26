@@ -19,6 +19,7 @@
 // SetLayoutFunc is a function pointer to a setLayout*() function
 typedef void (*SetLayoutFunc) (std::list<CAbstractBody *> &bodies);
 
+static void handleMouse(const SDL_Event &event);
 static void drawScreen(SDL_Surface *screen, std::list<CDrop *> &drops, std::list<CAbstractBody *> &bodies);
 static void drawGrid(SDL_Surface *screen);
 static CAbstractBody *getBodyAtPoint(Uint32 x, Uint32 y);
@@ -32,11 +33,18 @@ static void cleanup(std::list<CDrop *> &drops, std::list<CAbstractBody *> &bodie
 SDL_Surface *screen = NULL;
 b2World *world = NULL;
 bool gridVisible = true;
+int mouseX = 0;
+int mouseY = 0;
+bool mouseDownL = false;
+bool mouseDownR = false;
+CAbstractBody *draggingBody = NULL;
+CPolygon *draggingPolygon = NULL;
+int draggingVertexIndex = -1;
+b2Vec2 draggingDelta;
 
 int main(int argc, char* args[])
 {
 	bool running = true;
-	SDL_Event event;
 	int frame = 0;
 	CTimer fps;
 	std::list<CDrop *> drops;
@@ -46,12 +54,6 @@ int main(int argc, char* args[])
 	SetLayoutFunc layoutFuncs[] = {setLayout1, setLayout2, setLayout3, setLayout4};
 	const int LAYOUT_COUNT = sizeof(layoutFuncs) / sizeof(layoutFuncs[0]);
 	CContactListener contactListener;
-	int mouseX = 0;
-	int mouseY = 0;
-	bool mouseDownL = false;
-	bool mouseDownR = false;
-	CAbstractBody *draggingBody = NULL;
-	b2Vec2 draggingDiff;
 
 	srand((unsigned int)time(NULL));
 
@@ -86,6 +88,7 @@ int main(int argc, char* args[])
 
 		drawScreen(screen, drops, bodies);
 
+		SDL_Event event;
 		while (SDL_PollEvent(&event)) {
 			if (event.type == SDL_QUIT) {
 				running = false;
@@ -110,47 +113,8 @@ int main(int argc, char* args[])
 					layoutFuncs[curLayout](bodies);
 				}
 			}
-			else if (event.type == SDL_MOUSEMOTION) {
-				mouseX = event.motion.x;
-				mouseY = flipYAxis(event.motion.y);
-				if (draggingBody != NULL) {
-					b2Vec2 point = b2Vec2FromPixel(mouseX, mouseY);
-					b2Vec2 newPos = point + draggingDiff;
-					draggingBody->move(meterToPixel(newPos.x), meterToPixel(newPos.y));
-				}
-			}
-			else if (event.type == SDL_MOUSEBUTTONDOWN) {
-				if (event.button.button == SDL_BUTTON_LEFT) {
-					mouseDownL = true;
-					draggingBody = getBodyAtPoint(mouseX, mouseY);
-					if (draggingBody == NULL) {
-						debugPrint("Click=NULL");
-					}
-					else {
-						debugPrint("Click=%d,%d", draggingBody->getX(), draggingBody->getY());
-						b2Vec2 point = b2Vec2FromPixel(mouseX, mouseY);
-						b2Vec2 bodyPoint = b2Vec2FromPixel(draggingBody->getX(), draggingBody->getY());
-						draggingDiff = bodyPoint - point;
-					}
-				}
-				else if (event.button.button == SDL_BUTTON_RIGHT) {
-					mouseDownR = true;
-				}
-			}
-			else if (event.type == SDL_MOUSEBUTTONUP) {
-				if (event.button.button == SDL_BUTTON_LEFT) {
-					mouseDownL = false;
-					if (draggingBody != NULL) {
-						b2Vec2 point = b2Vec2FromPixel(mouseX, mouseY);
-						b2Vec2 newPos = point + draggingDiff;
-						draggingBody->move(meterToPixel(newPos.x), meterToPixel(newPos.y));
-						draggingBody = NULL;
-					}
-				}
-				else if (event.button.button == SDL_BUTTON_RIGHT) {
-					mouseDownR = false;
-				}
-			}
+
+			handleMouse(event);
 		}
 
 		char title[256];
@@ -171,6 +135,82 @@ int main(int argc, char* args[])
 	SDL_Quit();
 
 	return 0;
+}
+
+static void handleMouse(const SDL_Event &event)
+{
+	if (event.type == SDL_MOUSEMOTION) {
+		mouseX = event.motion.x;
+		mouseY = flipYAxis(event.motion.y);
+		if (draggingBody != NULL) {
+			b2Vec2 point = b2Vec2FromPixel(mouseX, mouseY);
+			b2Vec2 newPos = point + draggingDelta;
+
+			if (draggingPolygon != NULL && draggingVertexIndex >= 0) 
+				draggingPolygon->moveVertex(draggingVertexIndex, meterToPixel(newPos.x), meterToPixel(newPos.y));
+			else
+				draggingBody->move(meterToPixel(newPos.x), meterToPixel(newPos.y));
+		}
+	}
+	else if (event.type == SDL_MOUSEBUTTONDOWN) {
+		if (event.button.button == SDL_BUTTON_LEFT) {
+			mouseDownL = true;
+
+			// Get body at click point
+			draggingBody = getBodyAtPoint(mouseX, mouseY);
+
+			// If we have a body, and it's a CPolygon, check if the click point is near a vertex
+			draggingPolygon = dynamic_cast<CPolygon *>(draggingBody);
+			if (draggingPolygon != NULL) {
+				draggingVertexIndex = draggingPolygon->getNearestVertextIndex(mouseX, mouseY);
+				//draggingPolygon->getN
+				debugPrint("draggingVertex=%d", draggingVertexIndex);
+			}
+
+			if (draggingBody == NULL) {
+				debugPrint("Click=NULL");
+			}
+			else {
+				debugPrint("Click=%d,%d Body=%d,%d", mouseX, mouseY, draggingBody->getX(), draggingBody->getY());
+				b2Vec2 point = b2Vec2FromPixel(mouseX, mouseY);
+				b2Vec2 bodyPoint;
+
+				if (draggingPolygon != NULL && draggingVertexIndex >= 0)
+					bodyPoint = draggingPolygon->getVertex(draggingVertexIndex);
+				else
+					bodyPoint = b2Vec2FromPixel(draggingBody->getX(), draggingBody->getY());
+
+				// Calculate delta between where we clicked and what we are acting on, so that later we can move the
+				// body or vertex by the amount that the mouse pointer moved, not to where the mouse pointer is.
+				draggingDelta = bodyPoint - point;
+			}
+		}
+		else if (event.button.button == SDL_BUTTON_RIGHT) {
+			mouseDownR = true;
+		}
+	}
+	else if (event.type == SDL_MOUSEBUTTONUP) {
+		if (event.button.button == SDL_BUTTON_LEFT) {
+			mouseDownL = false;
+			if (draggingBody != NULL) {
+				b2Vec2 point = b2Vec2FromPixel(mouseX, mouseY);
+				b2Vec2 newPos = point + draggingDelta;
+
+				if (draggingPolygon != NULL && draggingVertexIndex >= 0) 
+					draggingPolygon->moveVertex(draggingVertexIndex, meterToPixel(newPos.x), meterToPixel(newPos.y));
+				else
+					draggingBody->move(meterToPixel(newPos.x), meterToPixel(newPos.y));
+
+				// Clear dragging variables
+				draggingBody = NULL;
+				draggingPolygon = NULL;
+				draggingVertexIndex =-1;
+			}
+		}
+		else if (event.button.button == SDL_BUTTON_RIGHT) {
+			mouseDownR = false;
+		}
+	}
 }
 
 static void drawScreen(SDL_Surface *screen, std::list<CDrop *> &drops, std::list<CAbstractBody *> &bodies)

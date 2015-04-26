@@ -16,6 +16,15 @@ public:
 	virtual void move(Uint32 x, Uint32 y);
 	virtual void draw(SDL_Surface *surface, unsigned int frame) const;
 
+	/// Gets the index of the nearest vertex to the specified pixel position, but only if it's within maxPixelDistance pixels. Otherwise returns -1.
+	int getNearestVertextIndex(Uint32 x, Uint32 y, Uint32 maxPixelDistance = 10) const;
+
+	/// Returns the pixel coordinates of the vertex specified by vertexIndex.
+	b2Vec2 getVertex(int vertexIndex) const;
+
+	/// Moves the specified vertex to the specified pixel position.
+	void moveVertex(int vertexIndex, Uint32 x, Uint32 y);
+
 protected:
 	int vertexCount;
 	int *xs;
@@ -30,4 +39,5 @@ private:
 	void constructRectangle(int x, int y, int width, int height, Uint32 color);
 
 	b2Body *createBody() const;
+	static b2FixtureDef createFixtureDef(const b2Shape *shape, void *userData);
 };

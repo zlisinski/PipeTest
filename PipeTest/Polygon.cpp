@@ -161,6 +161,7 @@ void CPolygon::move(Uint32 x, Uint32 y)
 		this->xs[i] += diffX;
 		this->ys[i] += diffY;
 	}
+	this->calculateB2Vertices();
 
 	b2Vec2 newPos = b2Vec2(pixelToMeter(x), pixelToMeter(y));
 	this->body->SetTransform(newPos, 0);
@@ -190,6 +191,71 @@ void CPolygon::draw(SDL_Surface *surface, unsigned int frame) const
 	delete [] Xs;
 }
 
+/// Gets the index of the nearest vertex to the specified pixel position, but only if it's within maxPixelDistance pixels. Otherwise returns -1.
+int CPolygon::getNearestVertextIndex(Uint32 x, Uint32 y, Uint32 maxPixelDistance) const
+{
+	b2Vec2 point = b2Vec2FromPixel(x, y);
+	b2Vec2 bestDelta(0, 0);
+	int bestIndex = -1;
+
+	// Find the vertex nearest the x,y point.
+	for (int i = 0; i < this->vertexCount; i++) {
+		b2Vec2 vertex = b2Vec2FromPixel(this->xs[i], this->ys[i]);
+		b2Vec2 delta = vertex - point;
+
+		// LengthSquared() is faster than Length() because Length() uses square root.
+		if (bestIndex == -1 || delta.LengthSquared() < bestDelta.LengthSquared()) {
+			bestIndex = i;
+			bestDelta = delta;
+		}
+	}
+
+	debugPrint("i=%d, x=%d, y=%d", bestIndex, meterToPixel(bestDelta.x), meterToPixel(bestDelta.y));
+
+	// Check that the nearest vertex is within maxPixelDistance.
+	if (abs(bestDelta.x) <= pixelToMeter(maxPixelDistance) &&
+		abs(bestDelta.y) <= pixelToMeter(maxPixelDistance)) {
+			return bestIndex;
+	}
+
+	return -1;
+}
+
+/// Returns the pixel coordinates of the vertex specified by vertexIndex.
+b2Vec2 CPolygon::getVertex(int vertexIndex) const
+{
+	if (vertexIndex < 0 || vertexIndex >= this->vertexCount)
+		throw new std::out_of_range("Bad vertexIndex");
+
+	// Returns a b2Vec2 using pixel values, not the actual this->b2Vertices[vertexIndex]. This is kinda confusing.
+	return b2Vec2FromPixel(this->xs[vertexIndex], this->ys[vertexIndex]);
+}
+
+/// Moves the specified vertex to the specified pixel position.
+void CPolygon::moveVertex(int vertexIndex, Uint32 x, Uint32 y)
+{
+	if (vertexIndex < 0 || vertexIndex >= this->vertexCount)
+		throw new std::out_of_range("Bad vertexIndex");
+
+	// Update the vertex
+	this->xs[vertexIndex] = x;
+	this->ys[vertexIndex] = y;
+	this->calculateB2Vertices();
+
+	// Delete old fixture, there is only one fixture.
+	b2Fixture *f = this->body->GetFixtureList();
+	this->body->DestroyFixture(f);
+
+	// Create shape
+	b2PolygonShape shape;
+	shape.Set(this->b2Vertices, this->vertexCount);
+
+	// Create new fixture
+	b2FixtureDef fixtureDef = CPolygon::createFixtureDef(&shape, (void *)this);
+
+	this->body->CreateFixture(&fixtureDef);
+}
+
 b2Body *CPolygon::createBody() const
 {
 	b2Body *newBody;
@@ -199,23 +265,33 @@ b2Body *CPolygon::createBody() const
 	
 	newBody = world->CreateBody(&bodyDef);
 
+	// Create shape
 	b2PolygonShape shape;
 	shape.Set(this->b2Vertices, this->vertexCount);
 
-	// Set collision properties
+	// Create fixture
+	b2FixtureDef fixtureDef = CPolygon::createFixtureDef(&shape, (void *)this);
+	newBody->CreateFixture(&fixtureDef);
+
+	//newBody->SetUserData((void*)this);
+
+	return newBody;
+}
+
+b2FixtureDef CPolygon::createFixtureDef(const b2Shape *shape, void *userData)
+{
 	b2FixtureDef fixtureDef;
-	fixtureDef.shape = &shape;
+	fixtureDef.shape = shape;
+
+	// Set collision properties
 	fixtureDef.filter.categoryBits = WALL_CATEGORY;
 	fixtureDef.filter.maskBits = WALL_MASK;
 	fixtureDef.filter.groupIndex = 0;
 
 	// Set userData
-	fixtureDef.userData = (void*)this;
-	
-	newBody->CreateFixture(&fixtureDef);
-	//newBody->SetUserData((void*)this);
+	fixtureDef.userData = userData;
 
-	return newBody;
+	return fixtureDef;
 }
 
 // Select the lowest(bottom) Y point which is left-most(lowest X) as the origin
