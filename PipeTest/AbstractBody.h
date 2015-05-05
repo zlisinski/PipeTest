@@ -14,6 +14,8 @@ public:
 	virtual ~CAbstractBody();
 
 	virtual void move(Uint32 x, Uint32 y);
+
+	/// Updates local data from Box2d data.
 	virtual void update();
 	virtual void draw(SDL_Surface *surface, unsigned int frame) const = 0;
 	virtual bool testPoint(Uint32 x, Uint32 y);

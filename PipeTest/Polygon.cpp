@@ -11,12 +11,10 @@ CPolygon::CPolygon() :
 	CAbstractBody(),
 	vertexCount(0),
 	xs(NULL),
-	ys(NULL),
-	b2Vertices(NULL)
+	ys(NULL)
 {
 	// This will probably crash without vertices...
-	this->calculateXY();
-	this->calculateB2Vertices();
+	this->createShape();
 	this->body = this->createBody();
 }
 
@@ -25,8 +23,7 @@ CPolygon::CPolygon(int xs[], int ys[], int vertexCount) :
 	CAbstractBody(),
 	vertexCount(vertexCount),
 	xs(NULL),
-	ys(NULL),
-	b2Vertices(NULL)
+	ys(NULL)
 {
 	this->constructPolygon(xs, ys, vertexCount, this->randomColor());
 }
@@ -36,8 +33,7 @@ CPolygon::CPolygon(int xs[], int ys[], int vertexCount, Uint32 color) :
 	CAbstractBody(),
 	vertexCount(vertexCount),
 	xs(NULL),
-	ys(NULL),
-	b2Vertices(NULL)
+	ys(NULL)
 {
 	this->constructPolygon(xs, ys, vertexCount, color);
 }
@@ -45,8 +41,7 @@ CPolygon::CPolygon(int xs[], int ys[], int vertexCount, Uint32 color) :
 // Create a rectangle with a random color
 CPolygon::CPolygon(int x, int y, int width, int height) :
 	CAbstractBody(),
-	vertexCount(4),
-	b2Vertices(NULL)
+	vertexCount(4)
 {
 	this->constructRectangle(x, y, width, height, this->randomColor());
 }
@@ -54,8 +49,7 @@ CPolygon::CPolygon(int x, int y, int width, int height) :
 // Create a rectangle with the specified color
 CPolygon::CPolygon(int x, int y, int width, int height, Uint32 color) :
 	CAbstractBody(),
-	vertexCount(4),
-	b2Vertices(NULL)
+	vertexCount(4)
 {
 	this->constructRectangle(x, y, width, height, color);
 }
@@ -63,6 +57,10 @@ CPolygon::CPolygon(int x, int y, int width, int height, Uint32 color) :
 // Called from constructor to create a polygon
 void CPolygon::constructPolygon(int xs[], int ys[], int vertexCount, Uint32 color)
 {
+	// Make sure we have between 3 and 8 vertices
+	if (vertexCount <= 2 || vertexCount > b2_maxPolygonVertices)
+		throw new std::out_of_range("vertexCount must be between [3, b2_maxPolygonVertices]");
+
 	this->xs = new int[vertexCount];
 	this->ys = new int[vertexCount];
 	memcpy(this->xs, xs, sizeof(int) * vertexCount);
@@ -70,9 +68,8 @@ void CPolygon::constructPolygon(int xs[], int ys[], int vertexCount, Uint32 colo
 
 	this->color = color;
 
-	this->calculateXY();
-	this->calculateB2Vertices();
-
+	// Create this->shape, and reorder the points in this->xs and this->ys to match the order in the box2d fixture.
+	this->createShape();
 	this->body = this->createBody();
 }
 
@@ -94,10 +91,8 @@ void CPolygon::constructRectangle(int x, int y, int width, int height, Uint32 co
 
 	this->color = color;
 
-	this->x = this->xs[0];
-	this->y = this->ys[0];
-	this->calculateB2Vertices();
-
+	// Create this->shape, and reorder the points in this->xs and this->ys to match the order in the box2d fixture.
+	this->createShape();
 	this->body = this->createBody();
 }
 
@@ -112,9 +107,7 @@ CPolygon::CPolygon(const CPolygon &copy) :
 
 	this->color = copy.color;
 
-	this->calculateXY();
-	this->calculateB2Vertices();
-
+	this->shape = copy.shape;
 	this->body = copy.createBody();
 }
 
@@ -127,15 +120,14 @@ CPolygon &CPolygon::operator=(const CPolygon &copy)
 
 		delete [] this->xs;
 		delete [] this->ys;
-		delete [] this->b2Vertices;
 		this->xs = new int[vertexCount];
 		this->ys = new int[vertexCount];
-		this->b2Vertices = new b2Vec2[vertexCount];
 		memcpy(this->xs, copy.xs, sizeof(*this->xs) * this->vertexCount);
 		memcpy(this->ys, copy.ys, sizeof(*this->ys) * this->vertexCount);
-		memcpy(this->b2Vertices, copy.b2Vertices, sizeof(*this->b2Vertices) * this->vertexCount);
 
 		this->color = copy.color;
+
+		this->shape = copy.shape;
 		this->body = copy.createBody();
 	}
 
@@ -146,25 +138,48 @@ CPolygon::~CPolygon()
 {
 	delete [] this->xs;
 	delete [] this->ys;
-	delete [] this->b2Vertices;
 }
 
+/// Move the Polygon to the specified position.
 void CPolygon::move(Uint32 x, Uint32 y)
 {
-	Uint32 diffX = x - this->x;
-	Uint32 diffY = y - this->y;
+	// Create vector from new position.
+	b2Vec2 newPos = b2Vec2FromPixel(x, y);
 
-	this->x = x;
-	this->y = y;
-
-	for (int i = 0; i < this->vertexCount; i++) {
-		this->xs[i] += diffX;
-		this->ys[i] += diffY;
-	}
-	this->calculateB2Vertices();
-
-	b2Vec2 newPos = b2Vec2(pixelToMeter(x), pixelToMeter(y));
+	// Move Box2d body to specified position.
 	this->body->SetTransform(newPos, 0);
+
+	// Get updated vertices from Box2d.
+	this->update();
+
+	// Update shape. This should not be needed.
+	//this->createShape();
+}
+
+/// Updates local data from Box2d data.
+void CPolygon::update()
+{
+	// Updates this->x and this->y
+	CAbstractBody::update();
+
+	// There is currently only one fixture. Update this if we add support for more.
+	b2Fixture *f = this->body->GetFixtureList();
+	if (f == NULL)
+		throw new std::invalid_argument("Fixture is NULL");
+
+	// This shouldn't be anything but a b2PolygonShape.
+	b2PolygonShape *s = dynamic_cast<b2PolygonShape *>(f->GetShape());
+	if (s == NULL)
+		throw new std::bad_cast("shape is not a b2PolygonShape");
+
+	// Update all vertices from the Box2d body.
+	for (int i = 0; i < this->vertexCount; i++) {
+		// Convert local point to world coordinates.
+		b2Vec2 worldVec = this->body->GetWorldPoint(s->m_vertices[i]);
+
+		this->xs[i] = meterToPixel(worldVec.x);
+		this->ys[i] = meterToPixel(worldVec.y);
+	}
 }
 
 void CPolygon::draw(SDL_Surface *surface, unsigned int frame) const
@@ -227,7 +242,7 @@ b2Vec2 CPolygon::getVertex(int vertexIndex) const
 	if (vertexIndex < 0 || vertexIndex >= this->vertexCount)
 		throw new std::out_of_range("Bad vertexIndex");
 
-	// Returns a b2Vec2 using pixel values, not the actual this->b2Vertices[vertexIndex]. This is kinda confusing.
+	// Returns a b2Vec2 using pixel values, not the actual Box2d vertex. This is kinda confusing.
 	return b2Vec2FromPixel(this->xs[vertexIndex], this->ys[vertexIndex]);
 }
 
@@ -240,37 +255,64 @@ void CPolygon::moveVertex(int vertexIndex, Uint32 x, Uint32 y)
 	// Update the vertex
 	this->xs[vertexIndex] = x;
 	this->ys[vertexIndex] = y;
-	this->calculateB2Vertices();
 
-	// Delete old fixture, there is only one fixture.
+	// Delete old fixture, there currently is only one fixture.
 	b2Fixture *f = this->body->GetFixtureList();
+	if (f == NULL)
+		throw new std::invalid_argument("fixture is NULL");
 	this->body->DestroyFixture(f);
 
-	// Create shape
-	b2PolygonShape shape;
-	shape.Set(this->b2Vertices, this->vertexCount);
+	// Create shape, and update this->xs and this->ys.
+	this->createShape();
 
 	// Create new fixture
-	b2FixtureDef fixtureDef = CPolygon::createFixtureDef(&shape, (void *)this);
-
+	b2FixtureDef fixtureDef = CPolygon::createFixtureDef(&this->shape, (void *)this);
 	this->body->CreateFixture(&fixtureDef);
+
+	// TODO: This could cause problems if the index of this vertex changes due to moving it. Code in main() saves the index. Possibly have this
+	// function return the new index?
+}
+
+/// Creates this->shape from points in this->xs and this->ys, and then reorder the points in
+/// this->xs and this->ys to match the order in the box2d shape.
+void CPolygon::createShape()
+{
+	b2Vec2 *b2Vertices = new b2Vec2[this->vertexCount];
+
+	// Set this->x and this->y to the bottom-left-most vertex.
+	this->calculateXY();
+
+	// The first vertex is (this->x, this->y)
+	b2Vec2 origin = b2Vec2FromPixel(this->x, this->y);
+
+	// We can't use b2Body::GetLocalPoint, as the body may not exist yet, so manually subtract the origin from the x,y points.
+	for (int i = 0; i < this->vertexCount; i++) {
+		b2Vec2 vec = b2Vec2FromPixel(this->xs[i], this->ys[i]);
+		b2Vertices[i] = vec - origin;
+	}
+
+	// Set the shape. This reorders the vertices into a convex shape, if the points are out of order.
+	this->shape.Set(b2Vertices, this->vertexCount);
+
+	// Update our this->xs and this->ys arrays to match the Box2d vertices. By using Box2d's vertex order, we are assured that 
+	// the order of the vertices creates a convex shape when passing the vertices to the SDL draw functions.
+	for (int i = 0; i < this->vertexCount; i++) {
+		this->xs[i] = meterToPixel(this->shape.m_vertices[i].x + origin.x);
+		this->ys[i] = meterToPixel(this->shape.m_vertices[i].y + origin.y);
+	}
 }
 
 b2Body *CPolygon::createBody() const
 {
 	b2Body *newBody;
 
+	// Create body.
 	b2BodyDef bodyDef;
 	bodyDef.position.Set(pixelToMeter(this->x), pixelToMeter(this->y));
-	
 	newBody = world->CreateBody(&bodyDef);
 
-	// Create shape
-	b2PolygonShape shape;
-	shape.Set(this->b2Vertices, this->vertexCount);
-
 	// Create fixture
-	b2FixtureDef fixtureDef = CPolygon::createFixtureDef(&shape, (void *)this);
+	b2FixtureDef fixtureDef = CPolygon::createFixtureDef(&this->shape, (void *)this);
 	newBody->CreateFixture(&fixtureDef);
 
 	//newBody->SetUserData((void*)this);
@@ -294,42 +336,21 @@ b2FixtureDef CPolygon::createFixtureDef(const b2Shape *shape, void *userData)
 	return fixtureDef;
 }
 
-// Select the lowest(bottom) Y point which is left-most(lowest X) as the origin
+/// Select the lowest(bottom) Y point which is left-most(lowest X) as the origin.
 void CPolygon::calculateXY()
 {
 	int originIndex = 0;
 
-	for (int i = 0; i < this->vertexCount; i++) {
-		if (this->ys[i] <= this->ys[originIndex]) {
-			if (this->ys[i] == this->ys[originIndex] && this->xs[i] <= this->xs[originIndex]) {
+	for (int i = 1; i < this->vertexCount; i++) {
+		// Find Bottom-Left-most point.
+		if (this->xs[i] < this->xs[originIndex] ||
+			(this->xs[i] == this->xs[originIndex] && this->ys[i] < this->ys[originIndex])) {
 				originIndex = i;
-			}
 		}
 	}
 
-	// Swap the origin point into the 0 index
-	// This can break the order of vertices (clockwise or counter-clockwise), does this matter? *POSSIBLE BUG*
-	if (originIndex != 0) {
-		std::swap(this->xs[0], this->xs[originIndex]);
-		std::swap(this->ys[0], this->ys[originIndex]);
-	}
+	//debugPrint("originIndex=%d", originIndex);
 
-	this->x = this->xs[0];
-	this->y = this->ys[0];
-}
-
-// Convert vertex point units to be b2Vec2 points relative to the origin point
-void CPolygon::calculateB2Vertices()
-{
-	delete [] this->b2Vertices;
-	this->b2Vertices = new b2Vec2[this->vertexCount];
-
-	// The first vertex is (this->x, this->y)
-	b2Vec2 origin = b2Vec2FromPixel(this->x, this->y);
-
-	// Subtract the origin vertex from each vertext
-	for (int i = 0; i < this->vertexCount; i++) {
-		b2Vec2 vec = b2Vec2FromPixel(this->xs[i], this->ys[i]);
-		this->b2Vertices[i] = vec - origin;
-	}
+	this->x = this->xs[originIndex];
+	this->y = this->ys[originIndex];
 }

@@ -48,7 +48,7 @@ int main(int argc, char* args[])
 	int frame = 0;
 	CTimer fps;
 	std::list<CDrop *> drops;
-	std::list<CAbstractBody *> bodies; // I know pointers aren't the best here, I'll change it later
+	std::list<CAbstractBody *> bodies;
 	std::list<CPipe> pipes;
 	int curLayout = 2;
 	SetLayoutFunc layoutFuncs[] = {setLayout1, setLayout2, setLayout3, setLayout4};
@@ -365,6 +365,12 @@ static void setLayout2(std::list<CAbstractBody *> &bodies)
 	int xs2[] = {700, 750, 725};
 	int ys2[] = {150, 150, 250};
 	bodies.push_back(new CPolygon(xs2, ys2, 3));
+
+	// Add a Rectangle with points out of order. Before the latest fixes, this would display incorrectly (like an X with the sides filled in,
+	// or a straight-sided hourglass on it's side.
+	int xs3[] = {650, 650, 750, 750};
+	int ys3[] = {350, 400, 350, 400};
+	bodies.push_back(new CPolygon(xs3, ys3, 4));
 }
 
 static void setLayout3(std::list<CAbstractBody *> &bodies)
