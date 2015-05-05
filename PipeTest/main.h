@@ -33,7 +33,11 @@ inline float pixelToMeter(Uint32 pixel)
 
 inline int meterToPixel(float meter)
 {
-	return (int)floor(meter * 100);
+	// VS2010 doesn't have round(), this is the way around that. Hopefully I'll upgrade to 2013, and cross-platform with Linux soon.
+	if (meter < 0.0)
+		return (int)ceil((meter * 100) - 0.5);
+	return (int)floor((meter * 100) + 0.5);
+	//return (int)round(meter * 100);
 }
 
 // Converts Y-up to Y-down coordinates and vice versa

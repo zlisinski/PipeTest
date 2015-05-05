@@ -13,7 +13,12 @@ public:
 	CPolygon &operator=(const CPolygon &copy);
 	virtual ~CPolygon();
 
+	/// Move the Polygon to the specified position.
 	virtual void move(Uint32 x, Uint32 y);
+
+	/// Updates local data from Box2d data.
+	virtual void update();
+
 	virtual void draw(SDL_Surface *surface, unsigned int frame) const;
 
 	/// Gets the index of the nearest vertex to the specified pixel position, but only if it's within maxPixelDistance pixels. Otherwise returns -1.
@@ -29,14 +34,17 @@ protected:
 	int vertexCount;
 	int *xs;
 	int *ys;
-	b2Vec2 *b2Vertices;
+	b2PolygonShape shape;
 
 	void calculateXY();
-	void calculateB2Vertices();
 
 private:
 	void constructPolygon(int xs[], int ys[], int vertexCount, Uint32 color);
 	void constructRectangle(int x, int y, int width, int height, Uint32 color);
+
+	/// Creates this->shape from points in this->xs and this->ys, and then reorder the points in
+	/// this->xs and this->ys to match the order in the box2d fixture.
+	void createShape();
 
 	b2Body *createBody() const;
 	static b2FixtureDef createFixtureDef(const b2Shape *shape, void *userData);
