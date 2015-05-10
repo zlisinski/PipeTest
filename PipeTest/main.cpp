@@ -41,6 +41,7 @@ CAbstractBody *draggingBody = NULL;
 CPolygon *draggingPolygon = NULL;
 int draggingVertexIndex = -1;
 b2Vec2 draggingDelta;
+bool bAddDrops = true;
 
 int main(int argc, char* args[])
 {
@@ -230,9 +231,11 @@ static void drawScreen(SDL_Surface *screen, std::list<CDrop *> &drops, std::list
 		drawGrid(screen);
 
 	// Add a new drop each frame.
-	drops.push_back(new CDrop());
-	drops.push_back(new CDrop());
-	drops.push_back(new CDrop());
+	if (bAddDrops) {
+		drops.push_back(new CDrop());
+		drops.push_back(new CDrop());
+		drops.push_back(new CDrop());
+	}
 
 	std::list<CDrop *>::iterator ppDrop = drops.begin();
 	while (ppDrop != drops.end()) {
