@@ -16,6 +16,9 @@ public:
 	/// Move the Polygon to the specified position.
 	virtual void move(Uint32 x, Uint32 y);
 
+	/// Rotate the Polygon by the specified number of degrees.
+	void rotate(float degrees);
+
 	/// Updates local data from Box2d data.
 	virtual void update();
 

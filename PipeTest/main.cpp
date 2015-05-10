@@ -188,6 +188,20 @@ static void handleMouse(const SDL_Event &event)
 		}
 		else if (event.button.button == SDL_BUTTON_RIGHT) {
 			mouseDownR = true;
+
+			// Get body at click point.
+			draggingBody = getBodyAtPoint(mouseX, mouseY);
+
+			// If we have a body, and it's a CPolygon, rotate it 90 degrees.
+			if (draggingBody != NULL) {
+				draggingPolygon = dynamic_cast<CPolygon *>(draggingBody);
+				if (draggingPolygon != NULL) {
+					draggingPolygon->rotate(90);
+				}
+			}
+
+			// Don't save body.
+			draggingBody = NULL;
 		}
 	}
 	else if (event.type == SDL_MOUSEBUTTONUP) {

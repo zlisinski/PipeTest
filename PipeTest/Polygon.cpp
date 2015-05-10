@@ -156,6 +156,22 @@ void CPolygon::move(Uint32 x, Uint32 y)
 	//this->createShape();
 }
 
+/// Rotate the Polygon by the specified number of degrees.
+void CPolygon::rotate(float degrees)
+{
+	// Get current angle of body in radians.
+	float bodyAngleRad = this->body->GetAngle();
+
+	// Convert angle to rotate to from degrees to radians.
+	float rad = degreeToRadian(degrees);
+
+	// Rotate the body.
+	this->body->SetTransform(this->body->GetPosition(), bodyAngleRad + rad);
+
+	// Update this->xs and this->ys points.
+	this->update();
+}
+
 /// Updates local data from Box2d data.
 void CPolygon::update()
 {
