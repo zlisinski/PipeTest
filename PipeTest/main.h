@@ -60,4 +60,16 @@ inline b2Vec2 b2Vec2FromPixel(Uint32 x, Uint32 y)
 	return b2Vec2(pixelToMeter(x), pixelToMeter(y));
 }
 
+/// Convert degrees to radians
+inline float degreeToRadian(float degree)
+{
+	return degree * 3.1415f / 180;
+}
+
+/// Convert radians to degrees
+inline float radianToDegree(float radian)
+{
+	return radian * 180 / 3.1415f;
+}
+
 void debugPrint(char *format, ...);
