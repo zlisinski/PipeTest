@@ -147,7 +147,7 @@ void CPolygon::move(Uint32 x, Uint32 y)
 	b2Vec2 newPos = b2Vec2FromPixel(x, y);
 
 	// Move Box2d body to specified position.
-	this->body->SetTransform(newPos, 0);
+	this->body->SetTransform(newPos, this->body->GetAngle());
 
 	// Get updated vertices from Box2d.
 	this->update();
