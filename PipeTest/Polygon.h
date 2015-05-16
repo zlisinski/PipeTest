@@ -51,4 +51,7 @@ private:
 
 	b2Body *createBody() const;
 	static b2FixtureDef createFixtureDef(const b2Shape *shape, void *userData);
+
+	/// Prints out the vertices to debug output.
+	void debugVertices(const std::string &label);
 };

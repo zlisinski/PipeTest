@@ -370,3 +370,27 @@ void CPolygon::calculateXY()
 	this->x = this->xs[originIndex];
 	this->y = this->ys[originIndex];
 }
+
+/// Prints out the vertices to debug output.
+void CPolygon::debugVertices(const std::string &label)
+{
+	// There is currently only one fixture. Update this if we add support for more.
+	b2Fixture *f = this->body->GetFixtureList();
+	if (f == NULL)
+		throw new std::invalid_argument("Fixture is NULL");
+
+	// This shouldn't be anything but a b2PolygonShape.
+	b2PolygonShape *s = dynamic_cast<b2PolygonShape *>(f->GetShape());
+	if (s == NULL)
+		throw new std::bad_cast("shape is not a b2PolygonShape");
+
+	// Print all vertices.
+	for (int i = 0; i < this->vertexCount; i++) {
+		b2Vec2 worldVec = this->body->GetWorldPoint(s->m_vertices[i]);
+
+		int x = meterToPixel(worldVec.x);
+		int y = meterToPixel(worldVec.y);
+
+		debugPrint("%s %d=%d,%d", label.c_str(), i, x, y);
+	}
+}
