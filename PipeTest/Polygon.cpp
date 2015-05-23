@@ -157,6 +157,9 @@ void CPolygon::move(Uint32 x, Uint32 y)
 }
 
 /// Rotate the Polygon by the specified number of degrees.
+// This first rotates the body around x,y which is one of the vertices, then it moves the body by the
+// difference of the center before and after the rotation, so that in the end it rotates around the center.
+// I feel like there has to be a better way to do this, but this works for now.
 void CPolygon::rotate(float degrees)
 {
 	// Get current angle of body in radians.
@@ -165,8 +168,18 @@ void CPolygon::rotate(float degrees)
 	// Convert angle to rotate to from degrees to radians.
 	float rad = degreeToRadian(degrees);
 
-	// Rotate the body.
+	// Get the center of the polygon before rotating.
+	b2Vec2 centerBefore = this->getCenter();
+
+	// Rotate the body. This rotates around the origin, not the center. Later we'll move it too.
 	this->body->SetTransform(this->body->GetPosition(), bodyAngleRad + rad);
+
+	// Get the center of the polygon before rotating.
+	b2Vec2 centerAfter = this->getCenter();
+
+	// Move body so that it really rotates around center.
+	b2Vec2 newPos = this->body->GetPosition() + centerBefore - centerAfter;
+	this->body->SetTransform(newPos, this->body->GetAngle());
 
 	// Update this->xs and this->ys points.
 	this->update();
@@ -178,26 +191,19 @@ void CPolygon::update()
 	// Updates this->x and this->y
 	CAbstractBody::update();
 
-	// There is currently only one fixture. Update this if we add support for more.
-	b2Fixture *f = this->body->GetFixtureList();
-	if (f == NULL)
-		throw new std::invalid_argument("Fixture is NULL");
-
-	// This shouldn't be anything but a b2PolygonShape.
-	b2PolygonShape *s = dynamic_cast<b2PolygonShape *>(f->GetShape());
-	if (s == NULL)
-		throw new std::bad_cast("shape is not a b2PolygonShape");
+	this->shape = this->getShapeFromBody();
 
 	// Update all vertices from the Box2d body.
 	for (int i = 0; i < this->vertexCount; i++) {
 		// Convert local point to world coordinates.
-		b2Vec2 worldVec = this->body->GetWorldPoint(s->m_vertices[i]);
+		b2Vec2 worldVec = this->body->GetWorldPoint(this->shape.m_vertices[i]);
 
 		this->xs[i] = meterToPixel(worldVec.x);
 		this->ys[i] = meterToPixel(worldVec.y);
 	}
 }
 
+/// Draw the polygon.
 void CPolygon::draw(SDL_Surface *surface, unsigned int frame) const
 {
 	// Flip Y axis because SDL is Y-down while the rest of the code is Y-up. Also convert Sint32 to Sint16.
@@ -220,6 +226,12 @@ void CPolygon::draw(SDL_Surface *surface, unsigned int frame) const
 
 	delete [] flippedYs;
 	delete [] Xs;
+
+	// Draw a small circle at the center of the body.
+	b2Vec2 center = this->getCenter();
+	Sint16 x = meterToPixel(center.x);
+	Sint16 y = flipYAxis(meterToPixel(center.y));
+	filledCircleColor(surface, x, y, 3, 0xFF0000FF);
 }
 
 /// Gets the index of the nearest vertex to the specified pixel position, but only if it's within maxPixelDistance pixels. Otherwise returns -1.
@@ -325,6 +337,7 @@ b2Body *CPolygon::createBody() const
 	// Create body.
 	b2BodyDef bodyDef;
 	bodyDef.position.Set(pixelToMeter(this->x), pixelToMeter(this->y));
+	bodyDef.type = b2_staticBody;
 	newBody = world->CreateBody(&bodyDef);
 
 	// Create fixture
@@ -393,4 +406,29 @@ void CPolygon::debugVertices(const std::string &label)
 
 		debugPrint("%s %d=%d,%d", label.c_str(), i, x, y);
 	}
+}
+
+/// Gets the b2PolygonShape object from the body.
+b2PolygonShape CPolygon::getShapeFromBody() const
+{
+	// There is currently only one fixture. Update this if we add support for more.
+	b2Fixture *f = this->body->GetFixtureList();
+	if (f == NULL)
+		throw new std::invalid_argument("Fixture is NULL");
+
+	// This shouldn't be anything but a b2PolygonShape.
+	b2PolygonShape *s = dynamic_cast<b2PolygonShape *>(f->GetShape());
+	if (s == NULL)
+		throw new std::bad_cast("shape is not a b2PolygonShape");
+
+	return *s;
+}
+
+/// Gets the center of the polygon.
+// Static bodies don't have mass, so we can't use the center of mass functions.
+b2Vec2 CPolygon::getCenter() const
+{
+	b2Vec2 center = this->body->GetWorldPoint(this->shape.m_centroid);
+
+	return center;
 }

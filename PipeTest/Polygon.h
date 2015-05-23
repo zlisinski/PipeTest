@@ -22,6 +22,7 @@ public:
 	/// Updates local data from Box2d data.
 	virtual void update();
 
+	/// Draw the polygon.
 	virtual void draw(SDL_Surface *surface, unsigned int frame) const;
 
 	/// Gets the index of the nearest vertex to the specified pixel position, but only if it's within maxPixelDistance pixels. Otherwise returns -1.
@@ -54,4 +55,12 @@ private:
 
 	/// Prints out the vertices to debug output.
 	void debugVertices(const std::string &label);
+
+	/// Gets the b2PolygonShape object from the body.
+	b2PolygonShape getShapeFromBody() const;
+
+	/// Gets the center of the polygon.
+	b2Vec2 getCenter() const;
+
+
 };
