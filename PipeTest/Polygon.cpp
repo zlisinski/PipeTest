@@ -174,7 +174,7 @@ void CPolygon::rotate(float degrees)
 	// Rotate the body. This rotates around the origin, not the center. Later we'll move it too.
 	this->body->SetTransform(this->body->GetPosition(), bodyAngleRad + rad);
 
-	// Get the center of the polygon before rotating.
+	// Get the center of the polygon after rotating.
 	b2Vec2 centerAfter = this->getCenter();
 
 	// Move body so that it really rotates around center.
