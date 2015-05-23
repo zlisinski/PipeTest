@@ -32,7 +32,8 @@ public:
 	b2Vec2 getVertex(int vertexIndex) const;
 
 	/// Moves the specified vertex to the specified pixel position.
-	void moveVertex(int vertexIndex, Uint32 x, Uint32 y);
+	/// Returns the new index of the vertex in the case that the vertex index changes as a result of moving.
+	int moveVertex(int vertexIndex, Uint32 x, Uint32 y);
 
 protected:
 	int vertexCount;
@@ -54,7 +55,7 @@ private:
 	static b2FixtureDef createFixtureDef(const b2Shape *shape, void *userData);
 
 	/// Prints out the vertices to debug output.
-	void debugVertices(const std::string &label);
+	void debugVertices(const std::string &label) const;
 
 	/// Gets the b2PolygonShape object from the body.
 	b2PolygonShape getShapeFromBody() const;

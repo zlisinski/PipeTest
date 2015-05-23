@@ -275,7 +275,8 @@ b2Vec2 CPolygon::getVertex(int vertexIndex) const
 }
 
 /// Moves the specified vertex to the specified pixel position.
-void CPolygon::moveVertex(int vertexIndex, Uint32 x, Uint32 y)
+/// Returns the new index of the vertex in the case that the vertex index changes as a result of moving.
+int CPolygon::moveVertex(int vertexIndex, Uint32 x, Uint32 y)
 {
 	if (vertexIndex < 0 || vertexIndex >= this->vertexCount)
 		throw new std::out_of_range("Bad vertexIndex");
@@ -297,8 +298,15 @@ void CPolygon::moveVertex(int vertexIndex, Uint32 x, Uint32 y)
 	b2FixtureDef fixtureDef = CPolygon::createFixtureDef(&this->shape, (void *)this);
 	this->body->CreateFixture(&fixtureDef);
 
-	// TODO: This could cause problems if the index of this vertex changes due to moving it. Code in main() saves the index. Possibly have this
-	// function return the new index?
+	// Because we are moving a vertex, box2d may change the order of vertices.
+	// Find the index of the same vertex, so we can return it to the controlling code.
+	for (int i = 0; i < this->vertexCount; i++) {
+		if (x == this->xs[i] && y == this->ys[i]) {
+			return i;
+		}
+	}
+
+	throw new std::exception("Can't find new index after moving vertex");
 }
 
 /// Creates this->shape from points in this->xs and this->ys, and then reorder the points in
@@ -385,7 +393,7 @@ void CPolygon::calculateXY()
 }
 
 /// Prints out the vertices to debug output.
-void CPolygon::debugVertices(const std::string &label)
+void CPolygon::debugVertices(const std::string &label) const
 {
 	// There is currently only one fixture. Update this if we add support for more.
 	b2Fixture *f = this->body->GetFixtureList();

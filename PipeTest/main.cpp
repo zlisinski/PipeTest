@@ -51,7 +51,7 @@ int main(int argc, char* args[])
 	std::list<CDrop *> drops;
 	std::list<CAbstractBody *> bodies;
 	std::list<CPipe> pipes;
-	int curLayout = 2;
+	int curLayout = 0;
 	SetLayoutFunc layoutFuncs[] = {setLayout1, setLayout2, setLayout3, setLayout4};
 	const int LAYOUT_COUNT = sizeof(layoutFuncs) / sizeof(layoutFuncs[0]);
 	CContactListener contactListener;
@@ -148,7 +148,7 @@ static void handleMouse(const SDL_Event &event)
 			b2Vec2 newPos = point + draggingDelta;
 
 			if (draggingPolygon != NULL && draggingVertexIndex >= 0) 
-				draggingPolygon->moveVertex(draggingVertexIndex, meterToPixel(newPos.x), meterToPixel(newPos.y));
+				draggingVertexIndex = draggingPolygon->moveVertex(draggingVertexIndex, meterToPixel(newPos.x), meterToPixel(newPos.y));
 			else
 				draggingBody->move(meterToPixel(newPos.x), meterToPixel(newPos.y));
 		}
@@ -219,7 +219,7 @@ static void handleMouse(const SDL_Event &event)
 				// Clear dragging variables
 				draggingBody = NULL;
 				draggingPolygon = NULL;
-				draggingVertexIndex =-1;
+				draggingVertexIndex = -1;
 			}
 		}
 		else if (event.button.button == SDL_BUTTON_RIGHT) {
