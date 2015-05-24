@@ -59,7 +59,7 @@ void CPolygon::constructPolygon(int xs[], int ys[], int vertexCount, Uint32 colo
 {
 	// Make sure we have between 3 and 8 vertices
 	if (vertexCount <= 2 || vertexCount > b2_maxPolygonVertices)
-		throw new std::out_of_range("vertexCount must be between [3, b2_maxPolygonVertices]");
+		throw std::out_of_range("vertexCount must be between [3, b2_maxPolygonVertices]");
 
 	this->xs = new int[vertexCount];
 	this->ys = new int[vertexCount];
@@ -268,7 +268,7 @@ int CPolygon::getNearestVertextIndex(Uint32 x, Uint32 y, Uint32 maxPixelDistance
 b2Vec2 CPolygon::getVertex(int vertexIndex) const
 {
 	if (vertexIndex < 0 || vertexIndex >= this->vertexCount)
-		throw new std::out_of_range("Bad vertexIndex");
+		throw std::out_of_range("Bad vertexIndex");
 
 	// Returns a b2Vec2 using pixel values, not the actual Box2d vertex. This is kinda confusing.
 	return b2Vec2FromPixel(this->xs[vertexIndex], this->ys[vertexIndex]);
@@ -279,7 +279,7 @@ b2Vec2 CPolygon::getVertex(int vertexIndex) const
 int CPolygon::moveVertex(int vertexIndex, Uint32 x, Uint32 y)
 {
 	if (vertexIndex < 0 || vertexIndex >= this->vertexCount)
-		throw new std::out_of_range("Bad vertexIndex");
+		throw std::out_of_range("Bad vertexIndex");
 
 	// Update the vertex
 	this->xs[vertexIndex] = x;
@@ -288,7 +288,7 @@ int CPolygon::moveVertex(int vertexIndex, Uint32 x, Uint32 y)
 	// Delete old fixture, there currently is only one fixture.
 	b2Fixture *f = this->body->GetFixtureList();
 	if (f == NULL)
-		throw new std::invalid_argument("fixture is NULL");
+		throw std::invalid_argument("fixture is NULL");
 	this->body->DestroyFixture(f);
 
 	// Create shape, and update this->xs and this->ys.
@@ -306,7 +306,7 @@ int CPolygon::moveVertex(int vertexIndex, Uint32 x, Uint32 y)
 		}
 	}
 
-	throw new std::exception("Can't find new index after moving vertex");
+	throw std::exception("Can't find new index after moving vertex");
 }
 
 /// Creates this->shape from points in this->xs and this->ys, and then reorder the points in
@@ -398,12 +398,12 @@ void CPolygon::debugVertices(const std::string &label) const
 	// There is currently only one fixture. Update this if we add support for more.
 	b2Fixture *f = this->body->GetFixtureList();
 	if (f == NULL)
-		throw new std::invalid_argument("Fixture is NULL");
+		throw std::invalid_argument("Fixture is NULL");
 
 	// This shouldn't be anything but a b2PolygonShape.
 	b2PolygonShape *s = dynamic_cast<b2PolygonShape *>(f->GetShape());
 	if (s == NULL)
-		throw new std::bad_cast("shape is not a b2PolygonShape");
+		throw std::bad_cast("shape is not a b2PolygonShape");
 
 	// Print all vertices.
 	for (int i = 0; i < this->vertexCount; i++) {
@@ -422,12 +422,12 @@ b2PolygonShape CPolygon::getShapeFromBody() const
 	// There is currently only one fixture. Update this if we add support for more.
 	b2Fixture *f = this->body->GetFixtureList();
 	if (f == NULL)
-		throw new std::invalid_argument("Fixture is NULL");
+		throw std::invalid_argument("Fixture is NULL");
 
 	// This shouldn't be anything but a b2PolygonShape.
 	b2PolygonShape *s = dynamic_cast<b2PolygonShape *>(f->GetShape());
 	if (s == NULL)
-		throw new std::bad_cast("shape is not a b2PolygonShape");
+		throw std::bad_cast("shape is not a b2PolygonShape");
 
 	return *s;
 }

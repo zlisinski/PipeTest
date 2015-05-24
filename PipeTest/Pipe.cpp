@@ -79,7 +79,7 @@ CPipe &CPipe::operator=(const CPipe &copy)
 		this->captureSide = copy.captureSide;
 		this->emitSide = copy.emitSide;
 		this->drops = copy.drops; // Probably has some problems
-		throw new std::exception(); // Throw to let me know if the code ever reaches here
+		throw std::exception(); // Throw to let me know if the code ever reaches here
 
 		// I don't remember why createBody is called on the copy and not on this object.
 		// Because of this, we have to set the UserData here, instead of in createBody.
